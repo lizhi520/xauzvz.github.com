@@ -9,7 +9,7 @@
 
 /* Define to 1 if your system has a GNU libc compatible `malloc' function, and
    to 0 otherwise. */
-#define HAVE_MALLOC 1
+#define HAVE_MALLOC 0
 
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
@@ -21,10 +21,10 @@
 #define HAVE_MKDIR 1
 
 /* Define to 1 if you have the `pow' function. */
-#define HAVE_POW 1
+/* #undef HAVE_POW */
 
 /* Define to 1 if you have the `sqrt' function. */
-#define HAVE_SQRT 1
+/* #undef HAVE_SQRT */
 
 /* Define to 1 if stdbool.h conforms to C99. */
 #define HAVE_STDBOOL_H 1
@@ -90,7 +90,7 @@
 #endif
 
 /* Define to rpl_malloc if the replacement function should be used. */
-/* #undef malloc */
+#define malloc rpl_malloc
 
 /* Define to `unsigned int' if <sys/types.h> does not define. */
 /* #undef size_t */
