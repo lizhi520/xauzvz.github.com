@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
 
 
     LLZ_PRINT_DBG("TEST: now test debug info\n");
-    printf("hello world");
+    printf("hello world, hehe! \n");
 
     LLZ_PRINT_UNINIT();
     return 0;  
