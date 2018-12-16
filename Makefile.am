@@ -1,0 +1,1 @@
+SUBDIRS=libxautils xatools 
