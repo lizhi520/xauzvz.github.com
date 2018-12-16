@@ -12,7 +12,10 @@
 
 DEBUG = 
 
-PREFIX = /usr/local
+TOPDIR = $(shell pwd)
+
+#PREFIX = /usr/local
+PREFIX = $(TOPDIR)/build
 
 CROSS = 
 #CROSS = arm-linux-
@@ -30,6 +33,10 @@ else
 #	CFLAGS += -O2	
 	CFLAGS += -Wall
 endif
+
+INSTALL_INCLUDE = $(PREFIX)/include
+INSTALL_LIB     = $(PREFIX)/lib 
+INSTALL_BIN     = $(PREFIX)/bin
 
 AR = $(CROSS)ar
 RANLIB = $(CROSS)ranlib

@@ -1,8 +1,11 @@
 include ../Makefile.include
 
-CFLAGS += -I.
+CFLAGS += -I. \
+		  -I../libxautil
+
 LDFLAGS += -L../libxautil \
-		   -lm -lpthread -lxautil
+		   -lxautil \
+		   -lm -lpthread
 
 #all tools objs
 TEST_OBJS = test.o test_opt.o
@@ -17,7 +20,8 @@ clean :
 	@rm -f *.out
 	@rm -f test 
 
-install :
+install:
+	cp test $(INSTALL_BIN)
 
 
 

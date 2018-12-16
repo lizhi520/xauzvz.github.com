@@ -14,14 +14,14 @@ include ../Makefile.include
 
 TARGET = libxautil.so
 
-SRCFILES =  $(shell ls *.c)
-OBJFILES =  $(patsubst %.c,%.o,$(SRCFILES))
+SRCS = $(shell ls *.c)
+OBJS = $(patsubst %.c,%.o,$(SRCS))
 
 CFLAGS += -I. -fPIC -shared
 LDFLAGS += -lm -lpthread 
 
-$(TARGET): $(OBJFILES)
-	$(CC) $(CFLAGS) -o $(TARGET) $(OBJFILES) $(LDFLAGS)	 
+$(TARGET): $(OBJS)
+	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS) $(LDFLAGS)	 
 
 all: $(TARGET) 
 
@@ -31,12 +31,9 @@ clean:
 	@rm -f $(TARGET)
 	@rm -rf $(TARGET).*
 
-INSTALL_INCLUDE = $(PREFIX)/include/libxautil
-INSTALL_LIB     = $(PREFIX)/lib 
-
 install: all
-	sudo mkdir -p $(PREFIX)/include/libxautil
-	sudo cp llz_print.h llz_clock.h $(INSTALL_INCLUDE)
-	sudo cp $(TARGET) $(INSTALL_LIB)
+	mkdir -p $(INSTALL_INCLUDE)/libxautil
+	cp llz_print.h llz_clock.h llz_sort.h $(INSTALL_INCLUDE)
+	cp $(TARGET) $(INSTALL_LIB)
 
 .PHONY : all install clean
