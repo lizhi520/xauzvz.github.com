@@ -1,7 +1,6 @@
-#ifndef _LLZ_GETOPT_H
-#define _LLZ_GETOPT_H
+#ifndef _XA_PCM2WAV_H
+#define _XA_PCM2WAV_H
 
-#include "libxafilter/llz_fir.h"
 
 /*
     Below macro maybe defined in llz_print, if you do not want to use llz_print,
@@ -16,22 +15,13 @@
 #define LLZ_PRINT_DBG   LLZ_PRINT
 #endif
 
-
-enum{
-    LLZ_DECIMATE = 0,
-    LLZ_INTERP,
-    LLZ_RESAMPLE,
-};
-
 extern char  opt_inputfile[] ;
 extern char  opt_outputfile[];
 
-extern int   opt_type      ;
-extern int   opt_downfactor;
-extern int   opt_upfactor  ;
-extern float opt_gain      ;
+extern int   opt_channel;
+extern int   opt_samplerate;
+extern float opt_gain;
 
-
-int resample_parseopt(int argc, char *argv[]);
+int pcm2wav_parseopt(int argc, char *argv[]);
 
 #endif

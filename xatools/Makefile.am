@@ -1,5 +1,5 @@
-noinst_PROGRAMS=test
-bin_PROGRAMS=xaresample
+#noinst_PROGRAMS=test
+bin_PROGRAMS=xaresample xapcm2wav
 
 test_SOURCES=test.c test_opt.c
 test_INCLUDES=test_opt.h
@@ -9,6 +9,13 @@ test_LDADD=-lm \
 xaresample_SOURCES=xaresample.c xaresample_opt.c
 xaresample_INCLUDES=xaresample_opt.h
 xaresample_LDADD=-lm \
+		   $(top_srcdir)/libxautil/libxautil.la \
+		   $(top_srcdir)/libxafilter/libxafilter.la \
+		   $(top_srcdir)/libxacodec/libxacodec.la
+
+xapcm2wav_SOURCES=xapcm2wav.c xapcm2wav_opt.c
+xapcm2wav_INCLUDES=xapcm2wav_opt.h
+xapcm2wav_LDADD=-lm \
 		   $(top_srcdir)/libxautil/libxautil.la \
 		   $(top_srcdir)/libxafilter/libxafilter.la \
 		   $(top_srcdir)/libxacodec/libxacodec.la

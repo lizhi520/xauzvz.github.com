@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
     unsigned char * p_wavout = (unsigned char *)wavsamples_out;
 
 
-    ret = llz_parseopt(argc, argv);
+    ret = resample_parseopt(argc, argv);
     if(ret) return -1;
 
     if ((destfile = fopen(opt_outputfile, "w+b")) == NULL) {

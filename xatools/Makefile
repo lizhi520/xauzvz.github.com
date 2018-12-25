@@ -88,8 +88,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = x86_64-apple-darwin16.4.0
 host_triplet = x86_64-apple-darwin16.4.0
-noinst_PROGRAMS = test$(EXEEXT)
-bin_PROGRAMS = xaresample$(EXEEXT)
+bin_PROGRAMS = xaresample$(EXEEXT) xapcm2wav$(EXEEXT)
 subdir = xatools
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -101,10 +100,12 @@ CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
-PROGRAMS = $(bin_PROGRAMS) $(noinst_PROGRAMS)
-am_test_OBJECTS = test.$(OBJEXT) test_opt.$(OBJEXT)
-test_OBJECTS = $(am_test_OBJECTS)
-test_DEPENDENCIES = $(top_srcdir)/libxautil/libxautil.la
+PROGRAMS = $(bin_PROGRAMS)
+am_xapcm2wav_OBJECTS = xapcm2wav.$(OBJEXT) xapcm2wav_opt.$(OBJEXT)
+xapcm2wav_OBJECTS = $(am_xapcm2wav_OBJECTS)
+xapcm2wav_DEPENDENCIES = $(top_srcdir)/libxautil/libxautil.la \
+	$(top_srcdir)/libxafilter/libxafilter.la \
+	$(top_srcdir)/libxacodec/libxacodec.la
 AM_V_lt = $(am__v_lt_$(V))
 am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
 am__v_lt_0 = --silent
@@ -129,8 +130,9 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I. -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = ./$(DEPDIR)/test.Po ./$(DEPDIR)/test_opt.Po \
-	./$(DEPDIR)/xaresample.Po ./$(DEPDIR)/xaresample_opt.Po
+am__depfiles_remade = ./$(DEPDIR)/xapcm2wav.Po \
+	./$(DEPDIR)/xapcm2wav_opt.Po ./$(DEPDIR)/xaresample.Po \
+	./$(DEPDIR)/xaresample_opt.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -150,8 +152,8 @@ AM_V_CCLD = $(am__v_CCLD_$(V))
 am__v_CCLD_ = $(am__v_CCLD_$(AM_DEFAULT_VERBOSITY))
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(test_SOURCES) $(xaresample_SOURCES)
-DIST_SOURCES = $(test_SOURCES) $(xaresample_SOURCES)
+SOURCES = $(xapcm2wav_SOURCES) $(xaresample_SOURCES)
+DIST_SOURCES = $(xapcm2wav_SOURCES) $(xaresample_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -305,6 +307,13 @@ xaresample_LDADD = -lm \
 		   $(top_srcdir)/libxafilter/libxafilter.la \
 		   $(top_srcdir)/libxacodec/libxacodec.la
 
+xapcm2wav_SOURCES = xapcm2wav.c xapcm2wav_opt.c
+xapcm2wav_INCLUDES = xapcm2wav_opt.h
+xapcm2wav_LDADD = -lm \
+		   $(top_srcdir)/libxautil/libxautil.la \
+		   $(top_srcdir)/libxafilter/libxafilter.la \
+		   $(top_srcdir)/libxacodec/libxacodec.la
+
 
 #INCLUDES=-I$(top_srcdir)/libxautil -I$(top_srcdir)/libxafilter -I$(top_srcdir)/libxacodec
 INCLUDES = -I$(top_srcdir)
@@ -391,18 +400,9 @@ clean-binPROGRAMS:
 	echo " rm -f" $$list; \
 	rm -f $$list
 
-clean-noinstPROGRAMS:
-	@list='$(noinst_PROGRAMS)'; test -n "$$list" || exit 0; \
-	echo " rm -f" $$list; \
-	rm -f $$list || exit $$?; \
-	test -n "$(EXEEXT)" || exit 0; \
-	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
-	echo " rm -f" $$list; \
-	rm -f $$list
-
-test$(EXEEXT): $(test_OBJECTS) $(test_DEPENDENCIES) $(EXTRA_test_DEPENDENCIES) 
-	@rm -f test$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(test_OBJECTS) $(test_LDADD) $(LIBS)
+xapcm2wav$(EXEEXT): $(xapcm2wav_OBJECTS) $(xapcm2wav_DEPENDENCIES) $(EXTRA_xapcm2wav_DEPENDENCIES) 
+	@rm -f xapcm2wav$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(xapcm2wav_OBJECTS) $(xapcm2wav_LDADD) $(LIBS)
 
 xaresample$(EXEEXT): $(xaresample_OBJECTS) $(xaresample_DEPENDENCIES) $(EXTRA_xaresample_DEPENDENCIES) 
 	@rm -f xaresample$(EXEEXT)
@@ -414,8 +414,8 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-include ./$(DEPDIR)/test.Po # am--include-marker
-include ./$(DEPDIR)/test_opt.Po # am--include-marker
+include ./$(DEPDIR)/xapcm2wav.Po # am--include-marker
+include ./$(DEPDIR)/xapcm2wav_opt.Po # am--include-marker
 include ./$(DEPDIR)/xaresample.Po # am--include-marker
 include ./$(DEPDIR)/xaresample_opt.Po # am--include-marker
 
@@ -576,12 +576,11 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-binPROGRAMS clean-generic clean-libtool \
-	clean-noinstPROGRAMS mostlyclean-am
+clean-am: clean-binPROGRAMS clean-generic clean-libtool mostlyclean-am
 
 distclean: distclean-am
-		-rm -f ./$(DEPDIR)/test.Po
-	-rm -f ./$(DEPDIR)/test_opt.Po
+		-rm -f ./$(DEPDIR)/xapcm2wav.Po
+	-rm -f ./$(DEPDIR)/xapcm2wav_opt.Po
 	-rm -f ./$(DEPDIR)/xaresample.Po
 	-rm -f ./$(DEPDIR)/xaresample_opt.Po
 	-rm -f Makefile
@@ -629,8 +628,8 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-		-rm -f ./$(DEPDIR)/test.Po
-	-rm -f ./$(DEPDIR)/test_opt.Po
+		-rm -f ./$(DEPDIR)/xapcm2wav.Po
+	-rm -f ./$(DEPDIR)/xapcm2wav_opt.Po
 	-rm -f ./$(DEPDIR)/xaresample.Po
 	-rm -f ./$(DEPDIR)/xaresample_opt.Po
 	-rm -f Makefile
@@ -654,16 +653,15 @@ uninstall-am: uninstall-binPROGRAMS
 .MAKE: install-am install-strip
 
 .PHONY: CTAGS GTAGS TAGS all all-am am--depfiles check check-am clean \
-	clean-binPROGRAMS clean-generic clean-libtool \
-	clean-noinstPROGRAMS cscopelist-am ctags ctags-am distclean \
-	distclean-compile distclean-generic distclean-libtool \
-	distclean-tags distdir dvi dvi-am html html-am info info-am \
-	install install-am install-binPROGRAMS install-data \
-	install-data-am install-dvi install-dvi-am install-exec \
-	install-exec-am install-html install-html-am install-info \
-	install-info-am install-man install-pdf install-pdf-am \
-	install-ps install-ps-am install-strip installcheck \
-	installcheck-am installdirs maintainer-clean \
+	clean-binPROGRAMS clean-generic clean-libtool cscopelist-am \
+	ctags ctags-am distclean distclean-compile distclean-generic \
+	distclean-libtool distclean-tags distdir dvi dvi-am html \
+	html-am info info-am install install-am install-binPROGRAMS \
+	install-data install-data-am install-dvi install-dvi-am \
+	install-exec install-exec-am install-html install-html-am \
+	install-info install-info-am install-man install-pdf \
+	install-pdf-am install-ps install-ps-am install-strip \
+	installcheck installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-compile \
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
 	tags tags-am uninstall uninstall-am uninstall-binPROGRAMS
