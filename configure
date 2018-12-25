@@ -12946,7 +12946,7 @@ fi
 done
 
 
-ac_config_files="$ac_config_files Makefile libxautil/Makefile xatools/Makefile"
+ac_config_files="$ac_config_files Makefile libxautil/Makefile libxafilter/Makefile libxacodec/Makefile xatools/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -13958,6 +13958,8 @@ do
     "libtool") CONFIG_COMMANDS="$CONFIG_COMMANDS libtool" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "libxautil/Makefile") CONFIG_FILES="$CONFIG_FILES libxautil/Makefile" ;;
+    "libxafilter/Makefile") CONFIG_FILES="$CONFIG_FILES libxafilter/Makefile" ;;
+    "libxacodec/Makefile") CONFIG_FILES="$CONFIG_FILES libxacodec/Makefile" ;;
     "xatools/Makefile") CONFIG_FILES="$CONFIG_FILES xatools/Makefile" ;;
 
   *) as_fn_error "invalid argument: \`$ac_config_target'" "$LINENO" 5;;

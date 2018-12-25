@@ -86,9 +86,10 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-build_triplet = x86_64-pc-none
-host_triplet = arm-unknown-linux-androideabi
+build_triplet = x86_64-apple-darwin16.4.0
+host_triplet = x86_64-apple-darwin16.4.0
 noinst_PROGRAMS = test$(EXEEXT)
+bin_PROGRAMS = xaresample$(EXEEXT)
 subdir = xatools
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -99,7 +100,8 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-PROGRAMS = $(noinst_PROGRAMS)
+am__installdirs = "$(DESTDIR)$(bindir)"
+PROGRAMS = $(bin_PROGRAMS) $(noinst_PROGRAMS)
 am_test_OBJECTS = test.$(OBJEXT) test_opt.$(OBJEXT)
 test_OBJECTS = $(am_test_OBJECTS)
 test_DEPENDENCIES = $(top_srcdir)/libxautil/libxautil.la
@@ -107,6 +109,11 @@ AM_V_lt = $(am__v_lt_$(V))
 am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
 am__v_lt_0 = --silent
 am__v_lt_1 = 
+am_xaresample_OBJECTS = xaresample.$(OBJEXT) xaresample_opt.$(OBJEXT)
+xaresample_OBJECTS = $(am_xaresample_OBJECTS)
+xaresample_DEPENDENCIES = $(top_srcdir)/libxautil/libxautil.la \
+	$(top_srcdir)/libxafilter/libxafilter.la \
+	$(top_srcdir)/libxacodec/libxacodec.la
 AM_V_P = $(am__v_P_$(V))
 am__v_P_ = $(am__v_P_$(AM_DEFAULT_VERBOSITY))
 am__v_P_0 = false
@@ -122,7 +129,8 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I. -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = ./$(DEPDIR)/test.Po ./$(DEPDIR)/test_opt.Po
+am__depfiles_remade = ./$(DEPDIR)/test.Po ./$(DEPDIR)/test_opt.Po \
+	./$(DEPDIR)/xaresample.Po ./$(DEPDIR)/xaresample_opt.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -142,8 +150,8 @@ AM_V_CCLD = $(am__v_CCLD_$(V))
 am__v_CCLD_ = $(am__v_CCLD_$(AM_DEFAULT_VERBOSITY))
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(test_SOURCES)
-DIST_SOURCES = $(test_SOURCES)
+SOURCES = $(test_SOURCES) $(xaresample_SOURCES)
+DIST_SOURCES = $(test_SOURCES) $(xaresample_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -173,21 +181,21 @@ DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = ${SHELL} /Users/luolongzhi/Project/mygithub/xaudiopro/missing aclocal-1.16
 AMTAR = $${TAR-tar}
 AM_DEFAULT_VERBOSITY = 1
-AR = arm-linux-androideabi-ar
+AR = ar
 AUTOCONF = ${SHELL} /Users/luolongzhi/Project/mygithub/xaudiopro/missing autoconf
 AUTOHEADER = ${SHELL} /Users/luolongzhi/Project/mygithub/xaudiopro/missing autoheader
 AUTOMAKE = ${SHELL} /Users/luolongzhi/Project/mygithub/xaudiopro/missing automake-1.16
 AWK = gawk
-CC = arm-linux-androideabi-gcc
+CC = gcc
 CCDEPMODE = depmode=gcc3
-CFLAGS = --sysroot=/Users/luolongzhi/Software/android-ndk-for-mac/android-ndk-r15c/platforms/android-22/arch-arm/
-CPP = arm-linux-androideabi-gcc -E
-CPPFLAGS = --sysroot=/Users/luolongzhi/Software/android-ndk-for-mac/android-ndk-r15c/platforms/android-22/arch-arm/
+CFLAGS = -g -O2
+CPP = gcc -E
+CPPFLAGS = 
 CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H
 DEPDIR = .deps
 DLLTOOL = false
-DSYMUTIL = 
+DSYMUTIL = dsymutil
 DUMPBIN = 
 ECHO_C = \c
 ECHO_N = 
@@ -201,24 +209,24 @@ INSTALL_DATA = ${INSTALL} -m 644
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
-LD = /Users/luolongzhi/Software/android-ndk-for-mac/android-ndk-r15c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/arm-linux-androideabi/bin/ld
+LD = /usr/bin/ld
 LDFLAGS = 
-LIBOBJS =  ${LIBOBJDIR}malloc$U.o
+LIBOBJS = 
 LIBS = 
 LIBTOOL = $(SHELL) $(top_builddir)/libtool
-LIPO = 
+LIPO = lipo
 LN_S = ln -s
-LTLIBOBJS =  ${LIBOBJDIR}malloc$U.lo
+LTLIBOBJS = 
 LT_SYS_LIBRARY_PATH = 
 MAKEINFO = ${SHELL} /Users/luolongzhi/Project/mygithub/xaudiopro/missing makeinfo
 MANIFEST_TOOL = :
 MKDIR_P = /usr/local/bin/gmkdir -p
-NM = /Users/luolongzhi/Software/android-ndk-for-mac/android-ndk-r15c/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-nm -B
-NMEDIT = 
-OBJDUMP = arm-linux-androideabi-objdump
+NM = /usr/bin/nm -B
+NMEDIT = nmedit
+OBJDUMP = objdump
 OBJEXT = o
-OTOOL = 
-OTOOL64 = 
+OTOOL = otool
+OTOOL64 = :
 PACKAGE = xaudiopro
 PACKAGE_BUGREPORT = luolongzhi@gmail.com
 PACKAGE_NAME = xaudiopro
@@ -227,18 +235,18 @@ PACKAGE_TARNAME = xaudiopro
 PACKAGE_URL = 
 PACKAGE_VERSION = 1.0
 PATH_SEPARATOR = :
-RANLIB = arm-linux-androideabi-ranlib
+RANLIB = ranlib
 SED = /usr/local/bin/gsed
 SET_MAKE = 
 SHELL = /bin/sh
-STRIP = arm-linux-androideabi-strip
+STRIP = strip
 VERSION = 1.0
 abs_builddir = /Users/luolongzhi/Project/mygithub/xaudiopro/xatools
 abs_srcdir = /Users/luolongzhi/Project/mygithub/xaudiopro/xatools
 abs_top_builddir = /Users/luolongzhi/Project/mygithub/xaudiopro
 abs_top_srcdir = /Users/luolongzhi/Project/mygithub/xaudiopro
-ac_ct_AR = 
-ac_ct_CC = 
+ac_ct_AR = ar
+ac_ct_CC = gcc
 ac_ct_DUMPBIN = 
 am__include = include
 am__leading_dot = .
@@ -246,22 +254,22 @@ am__quote =
 am__tar = $${TAR-tar} chof - "$$tardir"
 am__untar = $${TAR-tar} xf -
 bindir = ${exec_prefix}/bin
-build = x86_64-pc-none
-build_alias = x86_64
+build = x86_64-apple-darwin16.4.0
+build_alias = 
 build_cpu = x86_64
-build_os = none
-build_vendor = pc
+build_os = darwin16.4.0
+build_vendor = apple
 builddir = .
 datadir = ${datarootdir}
 datarootdir = ${prefix}/share
 docdir = ${datarootdir}/doc/${PACKAGE_TARNAME}
 dvidir = ${docdir}
 exec_prefix = ${prefix}
-host = arm-unknown-linux-androideabi
-host_alias = arm-linux-androideabi
-host_cpu = arm
-host_os = linux-androideabi
-host_vendor = unknown
+host = x86_64-apple-darwin16.4.0
+host_alias = 
+host_cpu = x86_64
+host_os = darwin16.4.0
+host_vendor = apple
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
@@ -274,7 +282,7 @@ mandir = ${datarootdir}/man
 mkdir_p = $(MKDIR_P)
 oldincludedir = /usr/include
 pdfdir = ${docdir}
-prefix = /Users/luolongzhi/Project/mygithub/xaudiopro/dist/xaudiopro/armeabi-v7a
+prefix = /usr/local
 program_transform_name = s,x,x,
 psdir = ${docdir}
 sbindir = ${exec_prefix}/sbin
@@ -290,7 +298,16 @@ test_INCLUDES = test_opt.h
 test_LDADD = -lm \
 		   $(top_srcdir)/libxautil/libxautil.la
 
-INCLUDES = -I$(top_srcdir)/libxautil
+xaresample_SOURCES = xaresample.c xaresample_opt.c
+xaresample_INCLUDES = xaresample_opt.h
+xaresample_LDADD = -lm \
+		   $(top_srcdir)/libxautil/libxautil.la \
+		   $(top_srcdir)/libxafilter/libxafilter.la \
+		   $(top_srcdir)/libxacodec/libxacodec.la
+
+
+#INCLUDES=-I$(top_srcdir)/libxautil -I$(top_srcdir)/libxafilter -I$(top_srcdir)/libxacodec
+INCLUDES = -I$(top_srcdir)
 all: all-am
 
 .SUFFIXES:
@@ -324,6 +341,55 @@ $(top_srcdir)/configure:  $(am__configure_deps)
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
+install-binPROGRAMS: $(bin_PROGRAMS)
+	@$(NORMAL_INSTALL)
+	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(bindir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(bindir)" || exit 1; \
+	fi; \
+	for p in $$list; do echo "$$p $$p"; done | \
+	sed 's/$(EXEEXT)$$//' | \
+	while read p p1; do if test -f $$p \
+	 || test -f $$p1 \
+	  ; then echo "$$p"; echo "$$p"; else :; fi; \
+	done | \
+	sed -e 'p;s,.*/,,;n;h' \
+	    -e 's|.*|.|' \
+	    -e 'p;x;s,.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/' | \
+	sed 'N;N;N;s,\n, ,g' | \
+	$(AWK) 'BEGIN { files["."] = ""; dirs["."] = 1 } \
+	  { d=$$3; if (dirs[d] != 1) { print "d", d; dirs[d] = 1 } \
+	    if ($$2 == $$4) files[d] = files[d] " " $$1; \
+	    else { print "f", $$3 "/" $$4, $$1; } } \
+	  END { for (d in files) print "f", d, files[d] }' | \
+	while read type dir files; do \
+	    if test "$$dir" = .; then dir=; else dir=/$$dir; fi; \
+	    test -z "$$files" || { \
+	    echo " $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files '$(DESTDIR)$(bindir)$$dir'"; \
+	    $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files "$(DESTDIR)$(bindir)$$dir" || exit $$?; \
+	    } \
+	; done
+
+uninstall-binPROGRAMS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
+	files=`for p in $$list; do echo "$$p"; done | \
+	  sed -e 'h;s,^.*/,,;s/$(EXEEXT)$$//;$(transform)' \
+	      -e 's/$$/$(EXEEXT)/' \
+	`; \
+	test -n "$$list" || exit 0; \
+	echo " ( cd '$(DESTDIR)$(bindir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(bindir)" && rm -f $$files
+
+clean-binPROGRAMS:
+	@list='$(bin_PROGRAMS)'; test -n "$$list" || exit 0; \
+	echo " rm -f" $$list; \
+	rm -f $$list || exit $$?; \
+	test -n "$(EXEEXT)" || exit 0; \
+	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
+	echo " rm -f" $$list; \
+	rm -f $$list
 
 clean-noinstPROGRAMS:
 	@list='$(noinst_PROGRAMS)'; test -n "$$list" || exit 0; \
@@ -338,6 +404,10 @@ test$(EXEEXT): $(test_OBJECTS) $(test_DEPENDENCIES) $(EXTRA_test_DEPENDENCIES)
 	@rm -f test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(test_OBJECTS) $(test_LDADD) $(LIBS)
 
+xaresample$(EXEEXT): $(xaresample_OBJECTS) $(xaresample_DEPENDENCIES) $(EXTRA_xaresample_DEPENDENCIES) 
+	@rm -f xaresample$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(xaresample_OBJECTS) $(xaresample_LDADD) $(LIBS)
+
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 
@@ -346,6 +416,8 @@ distclean-compile:
 
 include ./$(DEPDIR)/test.Po # am--include-marker
 include ./$(DEPDIR)/test_opt.Po # am--include-marker
+include ./$(DEPDIR)/xaresample.Po # am--include-marker
+include ./$(DEPDIR)/xaresample_opt.Po # am--include-marker
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -469,6 +541,9 @@ check-am: all-am
 check: check-am
 all-am: Makefile $(PROGRAMS)
 installdirs:
+	for dir in "$(DESTDIR)$(bindir)"; do \
+	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
+	done
 install: install-am
 install-exec: install-exec-am
 install-data: install-data-am
@@ -501,12 +576,14 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-generic clean-libtool clean-noinstPROGRAMS \
-	mostlyclean-am
+clean-am: clean-binPROGRAMS clean-generic clean-libtool \
+	clean-noinstPROGRAMS mostlyclean-am
 
 distclean: distclean-am
 		-rm -f ./$(DEPDIR)/test.Po
 	-rm -f ./$(DEPDIR)/test_opt.Po
+	-rm -f ./$(DEPDIR)/xaresample.Po
+	-rm -f ./$(DEPDIR)/xaresample_opt.Po
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -529,7 +606,7 @@ install-dvi: install-dvi-am
 
 install-dvi-am:
 
-install-exec-am:
+install-exec-am: install-binPROGRAMS
 
 install-html: install-html-am
 
@@ -554,6 +631,8 @@ installcheck-am:
 maintainer-clean: maintainer-clean-am
 		-rm -f ./$(DEPDIR)/test.Po
 	-rm -f ./$(DEPDIR)/test_opt.Po
+	-rm -f ./$(DEPDIR)/xaresample.Po
+	-rm -f ./$(DEPDIR)/xaresample_opt.Po
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
@@ -570,15 +649,16 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am:
+uninstall-am: uninstall-binPROGRAMS
 
 .MAKE: install-am install-strip
 
 .PHONY: CTAGS GTAGS TAGS all all-am am--depfiles check check-am clean \
-	clean-generic clean-libtool clean-noinstPROGRAMS cscopelist-am \
-	ctags ctags-am distclean distclean-compile distclean-generic \
-	distclean-libtool distclean-tags distdir dvi dvi-am html \
-	html-am info info-am install install-am install-data \
+	clean-binPROGRAMS clean-generic clean-libtool \
+	clean-noinstPROGRAMS cscopelist-am ctags ctags-am distclean \
+	distclean-compile distclean-generic distclean-libtool \
+	distclean-tags distdir dvi dvi-am html html-am info info-am \
+	install install-am install-binPROGRAMS install-data \
 	install-data-am install-dvi install-dvi-am install-exec \
 	install-exec-am install-html install-html-am install-info \
 	install-info-am install-man install-pdf install-pdf-am \
@@ -586,7 +666,7 @@ uninstall-am:
 	installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-compile \
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags tags-am uninstall uninstall-am
+	tags tags-am uninstall uninstall-am uninstall-binPROGRAMS
 
 .PRECIOUS: Makefile
 
