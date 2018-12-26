@@ -14,12 +14,6 @@
 #define LLZ_PRINT_DBG   LLZ_PRINT
 #endif
 
-
-enum{
-    DENOISE_RNN = 0,
-    DENOISE_LMS,
-};
-
 extern char  opt_inputfile[] ;
 extern char  opt_outputfile[];
 
