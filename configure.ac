@@ -26,4 +26,5 @@ AC_TYPE_SIZE_T
 AC_FUNC_MALLOC
 AC_CHECK_FUNCS([memset mkdir pow sqrt])
 
-AC_OUTPUT([Makefile libxautil/Makefile libxafilter/Makefile libxacodec/Makefile xatools/Makefile])
+AC_OUTPUT([Makefile libxautil/Makefile libxafilter/Makefile libxacodec/Makefile xatools/Makefile \
+           libxaext/Makefile libxaext/librnnoise/Makefile])

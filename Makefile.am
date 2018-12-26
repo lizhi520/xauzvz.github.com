@@ -1,1 +1,1 @@
-SUBDIRS=libxautil libxafilter libxacodec xatools 
+SUBDIRS=libxautil libxafilter libxacodec libxaext xatools 

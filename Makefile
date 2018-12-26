@@ -317,7 +317,7 @@ target_alias =
 top_build_prefix = 
 top_builddir = .
 top_srcdir = .
-SUBDIRS = libxautil libxafilter libxacodec xatools 
+SUBDIRS = libxautil libxafilter libxacodec libxaext xatools 
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
