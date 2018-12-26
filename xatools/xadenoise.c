@@ -4,7 +4,7 @@
 
   This program is part of xaudiopro, all copyrights are reserved by luolongzhi. 
 
-  filename: xaresample.c 
+  filename: xadenoise.c 
   time    : 2018/12/25 18:33 
   author  : luolongzhi ( luolongzhi@gmail.com )
 */
@@ -17,7 +17,7 @@
 #include "libxacodec/llz_wavfmt.h"
 #include "libxafilter/llz_fir.h"
 #include "libxafilter/llz_resample.h"
-#include "xaresample_opt.h"
+#include "xadenoise_opt.h"
 
 int main(int argc, char *argv[])
 {
@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
     unsigned char * p_wavout = (unsigned char *)wavsamples_out;
 
 
-    ret = resample_parseopt(argc, argv);
+    ret = denoise_parseopt(argc, argv);
     if(ret) return -1;
 
     if ((destfile = fopen(opt_outputfile, "w+b")) == NULL) {
