@@ -15,6 +15,7 @@
 #include <getopt.h>
 
 #include "libxacodec/llz_wavfmt.h"
+#include "libxacodec/llz_denoise.h"
 #include "xadenoise_opt.h"
 
 /*global option vaule*/

@@ -88,7 +88,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = x86_64-apple-darwin16.4.0
 host_triplet = x86_64-apple-darwin16.4.0
-bin_PROGRAMS = xaresample$(EXEEXT) xapcm2wav$(EXEEXT)
+bin_PROGRAMS = xaresample$(EXEEXT) xapcm2wav$(EXEEXT) \
+	xadenoise$(EXEEXT)
 subdir = xatools
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -101,15 +102,20 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_xapcm2wav_OBJECTS = xapcm2wav.$(OBJEXT) xapcm2wav_opt.$(OBJEXT)
-xapcm2wav_OBJECTS = $(am_xapcm2wav_OBJECTS)
-xapcm2wav_DEPENDENCIES = $(top_srcdir)/libxautil/libxautil.la \
+am_xadenoise_OBJECTS = xadenoise.$(OBJEXT) xadenoise_opt.$(OBJEXT)
+xadenoise_OBJECTS = $(am_xadenoise_OBJECTS)
+xadenoise_DEPENDENCIES = $(top_srcdir)/libxautil/libxautil.la \
 	$(top_srcdir)/libxafilter/libxafilter.la \
 	$(top_srcdir)/libxacodec/libxacodec.la
 AM_V_lt = $(am__v_lt_$(V))
 am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
 am__v_lt_0 = --silent
 am__v_lt_1 = 
+am_xapcm2wav_OBJECTS = xapcm2wav.$(OBJEXT) xapcm2wav_opt.$(OBJEXT)
+xapcm2wav_OBJECTS = $(am_xapcm2wav_OBJECTS)
+xapcm2wav_DEPENDENCIES = $(top_srcdir)/libxautil/libxautil.la \
+	$(top_srcdir)/libxafilter/libxafilter.la \
+	$(top_srcdir)/libxacodec/libxacodec.la
 am_xaresample_OBJECTS = xaresample.$(OBJEXT) xaresample_opt.$(OBJEXT)
 xaresample_OBJECTS = $(am_xaresample_OBJECTS)
 xaresample_DEPENDENCIES = $(top_srcdir)/libxautil/libxautil.la \
@@ -130,7 +136,8 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I. -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = ./$(DEPDIR)/xapcm2wav.Po \
+am__depfiles_remade = ./$(DEPDIR)/xadenoise.Po \
+	./$(DEPDIR)/xadenoise_opt.Po ./$(DEPDIR)/xapcm2wav.Po \
 	./$(DEPDIR)/xapcm2wav_opt.Po ./$(DEPDIR)/xaresample.Po \
 	./$(DEPDIR)/xaresample_opt.Po
 am__mv = mv -f
@@ -152,8 +159,10 @@ AM_V_CCLD = $(am__v_CCLD_$(V))
 am__v_CCLD_ = $(am__v_CCLD_$(AM_DEFAULT_VERBOSITY))
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(xapcm2wav_SOURCES) $(xaresample_SOURCES)
-DIST_SOURCES = $(xapcm2wav_SOURCES) $(xaresample_SOURCES)
+SOURCES = $(xadenoise_SOURCES) $(xapcm2wav_SOURCES) \
+	$(xaresample_SOURCES)
+DIST_SOURCES = $(xadenoise_SOURCES) $(xapcm2wav_SOURCES) \
+	$(xaresample_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -314,6 +323,13 @@ xapcm2wav_LDADD = -lm \
 		   $(top_srcdir)/libxafilter/libxafilter.la \
 		   $(top_srcdir)/libxacodec/libxacodec.la
 
+xadenoise_SOURCES = xadenoise.c xadenoise_opt.c
+xadenoise_INCLUDES = xadenoise_opt.h
+xadenoise_LDADD = -lm \
+		   $(top_srcdir)/libxautil/libxautil.la \
+		   $(top_srcdir)/libxafilter/libxafilter.la \
+		   $(top_srcdir)/libxacodec/libxacodec.la
+
 
 #INCLUDES=-I$(top_srcdir)/libxautil -I$(top_srcdir)/libxafilter -I$(top_srcdir)/libxacodec
 INCLUDES = -I$(top_srcdir)
@@ -400,6 +416,10 @@ clean-binPROGRAMS:
 	echo " rm -f" $$list; \
 	rm -f $$list
 
+xadenoise$(EXEEXT): $(xadenoise_OBJECTS) $(xadenoise_DEPENDENCIES) $(EXTRA_xadenoise_DEPENDENCIES) 
+	@rm -f xadenoise$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(xadenoise_OBJECTS) $(xadenoise_LDADD) $(LIBS)
+
 xapcm2wav$(EXEEXT): $(xapcm2wav_OBJECTS) $(xapcm2wav_DEPENDENCIES) $(EXTRA_xapcm2wav_DEPENDENCIES) 
 	@rm -f xapcm2wav$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(xapcm2wav_OBJECTS) $(xapcm2wav_LDADD) $(LIBS)
@@ -414,6 +434,8 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+include ./$(DEPDIR)/xadenoise.Po # am--include-marker
+include ./$(DEPDIR)/xadenoise_opt.Po # am--include-marker
 include ./$(DEPDIR)/xapcm2wav.Po # am--include-marker
 include ./$(DEPDIR)/xapcm2wav_opt.Po # am--include-marker
 include ./$(DEPDIR)/xaresample.Po # am--include-marker
@@ -579,7 +601,9 @@ clean: clean-am
 clean-am: clean-binPROGRAMS clean-generic clean-libtool mostlyclean-am
 
 distclean: distclean-am
-		-rm -f ./$(DEPDIR)/xapcm2wav.Po
+		-rm -f ./$(DEPDIR)/xadenoise.Po
+	-rm -f ./$(DEPDIR)/xadenoise_opt.Po
+	-rm -f ./$(DEPDIR)/xapcm2wav.Po
 	-rm -f ./$(DEPDIR)/xapcm2wav_opt.Po
 	-rm -f ./$(DEPDIR)/xaresample.Po
 	-rm -f ./$(DEPDIR)/xaresample_opt.Po
@@ -628,7 +652,9 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-		-rm -f ./$(DEPDIR)/xapcm2wav.Po
+		-rm -f ./$(DEPDIR)/xadenoise.Po
+	-rm -f ./$(DEPDIR)/xadenoise_opt.Po
+	-rm -f ./$(DEPDIR)/xapcm2wav.Po
 	-rm -f ./$(DEPDIR)/xapcm2wav_opt.Po
 	-rm -f ./$(DEPDIR)/xaresample.Po
 	-rm -f ./$(DEPDIR)/xaresample_opt.Po

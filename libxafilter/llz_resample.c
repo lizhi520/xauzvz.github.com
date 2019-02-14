@@ -557,7 +557,7 @@ int llz_resample(uintptr_t handle, unsigned char *sample_in, int sample_in_size,
     int L, M, Q;
     float gain = resflt->gain;
 
-    assert(sample_in_size == resflt->bytes_in);
+    /*assert(sample_in_size == resflt->bytes_in);*/
     
     L = resflt->L;
     M = resflt->M;
@@ -578,9 +578,11 @@ int llz_resample(uintptr_t handle, unsigned char *sample_in, int sample_in_size,
 
     /*set the xp point to the first sample*/
     x = &(pbuf[Q]);
-    *sample_out_size =0;
+    /**sample_out_size =0;*/
+    *sample_out_size = (sample_in_size * resflt->L)/resflt->M;
 
-    for (i = 0; i < resflt->num_out; i++) {
+    /*for (i = 0; i < resflt->num_out; i++) {*/
+    for (i = 0; i < *sample_out_size; i++) {
         float y= 0.0;
 
         xp = x + (i*M)/L;
@@ -602,7 +604,7 @@ int llz_resample(uintptr_t handle, unsigned char *sample_in, int sample_in_size,
 
     }
 
-    *sample_out_size = resflt->bytes_out;
+    /**sample_out_size = resflt->bytes_out;*/
 
     return 0;
 

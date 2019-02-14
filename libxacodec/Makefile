@@ -131,7 +131,7 @@ am__installdirs = "$(DESTDIR)$(libdir)" \
 	"$(DESTDIR)$(libxacodec_la_includedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libxacodec_la_DEPENDENCIES =
-am__objects_1 = llz_wavfmt.lo
+am__objects_1 = llz_wavfmt.lo llz_denoise.lo
 am_libxacodec_la_OBJECTS = $(am__objects_1)
 libxacodec_la_OBJECTS = $(am_libxacodec_la_OBJECTS)
 AM_V_lt = $(am__v_lt_$(V))
@@ -153,7 +153,8 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I. -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = ./$(DEPDIR)/llz_wavfmt.Plo
+am__depfiles_remade = ./$(DEPDIR)/llz_denoise.Plo \
+	./$(DEPDIR)/llz_wavfmt.Plo
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -317,12 +318,13 @@ target_alias =
 top_build_prefix = ../
 top_builddir = ..
 top_srcdir = ..
-xacodec_src = llz_wavfmt.c
+xacodec_src = llz_wavfmt.c llz_denoise.c
 lib_LTLIBRARIES = libxacodec.la 
 libxacodec_la_SOURCES = $(xacodec_src)
 libxacodec_la_LIBADD = -lm
 libxacodec_la_includedir = $(includedir)/libxacodec
 libxacodec_la_include_HEADERS = llz_wavfmt.h
+INCLUDES = -I$(top_srcdir)
 all: all-am
 
 .SUFFIXES:
@@ -401,6 +403,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+include ./$(DEPDIR)/llz_denoise.Plo # am--include-marker
 include ./$(DEPDIR)/llz_wavfmt.Plo # am--include-marker
 
 $(am__depfiles_remade):
@@ -585,7 +588,8 @@ clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
 	mostlyclean-am
 
 distclean: distclean-am
-		-rm -f ./$(DEPDIR)/llz_wavfmt.Plo
+		-rm -f ./$(DEPDIR)/llz_denoise.Plo
+	-rm -f ./$(DEPDIR)/llz_wavfmt.Plo
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -631,7 +635,8 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-		-rm -f ./$(DEPDIR)/llz_wavfmt.Plo
+		-rm -f ./$(DEPDIR)/llz_denoise.Plo
+	-rm -f ./$(DEPDIR)/llz_wavfmt.Plo
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

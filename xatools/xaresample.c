@@ -110,7 +110,6 @@ int main(int argc, char *argv[])
                 break;
         }
 
-
         fwrite(p_wavout, 1, out_len_bytes, destfile);
         write_total_size += out_len_bytes;
 
