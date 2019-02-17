@@ -27,6 +27,7 @@ int main(int argc, char *argv[])
 	FILE  * destfile;
 	FILE  * sourcefile;
 	llz_wavfmt_t fmt;
+	llz_wavfmt_t fmt1;
     int samplerate_in;
     int samplerate_out;
 
@@ -57,14 +58,22 @@ int main(int argc, char *argv[])
     }
 
     fmt = llz_wavfmt_readheader(sourcefile);
+    printf("format: %d\n", fmt.format);
+    printf("chn: %d\n", fmt.channels);
+    printf("samplerate: %d\n", fmt.samplerate);
+    printf("block_align: %d\n", fmt.block_align);
     samplerate_in = fmt.samplerate;
     fseek(sourcefile,44,0);
 
     h_denoise = llz_denoise_init(opt_type, fmt.channels, fmt.samplerate);
 
-    fseek(destfile  ,  0, SEEK_SET);
-    fmt.samplerate = samplerate_out;
-    llz_wavfmt_writeheader(fmt, destfile);
+    fmt1.format = 0x0001;
+    fmt1.channels = fmt.channels;
+    fmt1.samplerate = fmt.samplerate;
+    fmt1.bytes_per_sample = 2;
+    fmt1.block_align = 2*fmt.samplerate;
+    fseek(destfile, 0, SEEK_SET);
+    llz_wavfmt_writeheader(fmt1, destfile);
 
     in_len_bytes = llz_denoise_framelen_bytes(h_denoise);
 
@@ -86,9 +95,9 @@ int main(int argc, char *argv[])
         printf("the frame = [%d]\r", frame_index);
     }
 
-    fmt.data_size = write_total_size/fmt.block_align;
+    fmt1.data_size = write_total_size/fmt1.block_align;
     fseek(destfile, 0, SEEK_SET);
-    llz_wavfmt_writeheader(fmt,destfile);
+    llz_wavfmt_writeheader(fmt1, destfile);
 
     llz_denoise_uninit(h_denoise);
     fclose(sourcefile);

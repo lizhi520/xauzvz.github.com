@@ -7,10 +7,12 @@ extern "C"
 #endif  
 
 
+int llz_mixer_pass(unsigned char *sample_in, int bytes_len, unsigned char *sample_out);
 int llz_mixer_stereo2mono(unsigned char *sample_in, int sample_in_size, unsigned char *sample_out, int *sample_out_size);
 int llz_mixer_mono2stereo(unsigned char *sample_in, int sample_in_size, unsigned char *sample_out, int *sample_out_size);
 int llz_mixer_stereo_left(unsigned char *sample_in, int sample_in_size, unsigned char *sample_out, int *sample_out_size);
 int llz_mixer_stereo_right(unsigned char *sample_in, int sample_in_size, unsigned char *sample_out, int *sample_out_size);
+int llz_mixer_lr2stereo(unsigned char *sample_in_left, unsigned char *sample_in_right, int sample_in_size, unsigned char *sample_out, int *sample_out_size);
 
 
 #ifdef __cplusplus 
