@@ -38,14 +38,14 @@ uintptr_t llz_denoise_init(int type, int channel, int sample_rate)
     f->type = type;
     f->channel = channel;
     f->sample_rate = sample_rate;
-    f->inbuf[0] = (unsigned char *)calloc(1, LLZ_FRAMELEN_MAX*2);
-    f->inbuf[1] = (unsigned char *)calloc(1, LLZ_FRAMELEN_MAX*2);
-    f->outbuf[0] = (unsigned char *)calloc(1, LLZ_FRAMELEN_MAX*2);
-    f->outbuf[1] = (unsigned char *)calloc(1, LLZ_FRAMELEN_MAX*2);
-    f->rnn_inbuf[0] = (unsigned char *)calloc(1, LLZ_FRAMELEN_MAX*2);
-    f->rnn_inbuf[1] = (unsigned char *)calloc(1, LLZ_FRAMELEN_MAX*2);
-    f->rnn_outbuf[0] = (unsigned char *)calloc(1, LLZ_FRAMELEN_MAX*2);
-    f->rnn_outbuf[1] = (unsigned char *)calloc(1, LLZ_FRAMELEN_MAX*2);
+    f->inbuf[0] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_MAX*2);
+    f->inbuf[1] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_MAX*2);
+    f->outbuf[0] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_MAX*2);
+    f->outbuf[1] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_MAX*2);
+    f->rnn_inbuf[0] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_MAX*2);
+    f->rnn_inbuf[1] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_MAX*2);
+    f->rnn_outbuf[0] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_MAX*2);
+    f->rnn_outbuf[1] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_MAX*2);
 
     if (type == DENOISE_RNN) {
         if (sample_rate != 48000 &&

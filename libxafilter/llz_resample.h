@@ -30,10 +30,10 @@ extern "C"
 #endif  
 
 
-#define LLZ_DEFAULT_FRAMELEN     1024            /* default num of sample in */
-#define LLZ_FRAMELEN_MAX         (160*147+8192)  /* 8192 no meaning, I just set here to safe regarding */
+#define LLZ_RS_DEFAULT_FRAMELEN     1024            /* default num of sample in */
+#define LLZ_RS_FRAMELEN_MAX         (160*147+8192)  /* 8192 no meaning, I just set here to safe regarding */
 
-#define LLZ_RATIO_MAX            16
+#define LLZ_RS_RATIO_MAX            16
 
 uintptr_t llz_decimate_init(int M, float gain, win_t win_type);
 void      llz_decimate_uninit(uintptr_t handle);

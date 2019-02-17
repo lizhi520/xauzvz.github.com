@@ -38,8 +38,8 @@ int main(int argc, char *argv[])
 
     unsigned long h_resflt;
 
-	short wavsamples_in[LLZ_FRAMELEN_MAX];
-	short wavsamples_out[LLZ_FRAMELEN_MAX];
+	short wavsamples_in[LLZ_RS_FRAMELEN_MAX];
+	short wavsamples_out[LLZ_RS_FRAMELEN_MAX];
     unsigned char * p_wavin  = (unsigned char *)wavsamples_in;
     unsigned char * p_wavout = (unsigned char *)wavsamples_out;
 

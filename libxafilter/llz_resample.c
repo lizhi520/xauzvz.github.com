@@ -275,7 +275,7 @@ uintptr_t llz_decimate_init(int M, float gain, win_t win_type)
 
     resflt = (llz_resample_filter_t *)malloc(sizeof(llz_resample_filter_t));
 
-    if (M > LLZ_RATIO_MAX) 
+    if (M > LLZ_RS_RATIO_MAX) 
         return -1;
 
     resflt->L = 1;
@@ -288,7 +288,7 @@ uintptr_t llz_decimate_init(int M, float gain, win_t win_type)
     
     polyphase_filter_init(&resflt->ppflt, M, resflt->fc, 1, win_type);
     
-    m = LLZ_DEFAULT_FRAMELEN/M;
+    m = LLZ_RS_DEFAULT_FRAMELEN/M;
     resflt->num_in = m*M;
     resflt->num_out = m;
     resflt->bytes_in = resflt->bytes_per_sample * resflt->num_in;
@@ -323,7 +323,7 @@ uintptr_t llz_interp_init(int L, float gain, win_t win_type)
 
     resflt = (llz_resample_filter_t *)malloc(sizeof(llz_resample_filter_t));
 
-    if (L > LLZ_RATIO_MAX) 
+    if (L > LLZ_RS_RATIO_MAX) 
         return -1;
 
     resflt->L = L;
@@ -335,8 +335,8 @@ uintptr_t llz_interp_init(int L, float gain, win_t win_type)
     
     polyphase_filter_init(&resflt->ppflt, L, resflt->fc, L, win_type);
     
-    resflt->num_in = LLZ_DEFAULT_FRAMELEN;
-    resflt->num_out = LLZ_DEFAULT_FRAMELEN*L;
+    resflt->num_in = LLZ_RS_DEFAULT_FRAMELEN;
+    resflt->num_out = LLZ_RS_DEFAULT_FRAMELEN*L;
     resflt->bytes_in = resflt->bytes_per_sample * resflt->num_in;
     resflt->bytes_out = resflt->bytes_per_sample * resflt->num_out;
 
@@ -373,8 +373,8 @@ uintptr_t llz_resample_filter_init(int L, int M, float gain, win_t win_type)
     resflt = (llz_resample_filter_t *)malloc(sizeof(llz_resample_filter_t));
 
     ratio = ((float)L)/M;
-    if ((ratio      > LLZ_RATIO_MAX) || 
-       ((1./ratio) > LLZ_RATIO_MAX))
+    if ((ratio      > LLZ_RS_RATIO_MAX) || 
+       ((1./ratio) > LLZ_RS_RATIO_MAX))
         return -1;
 
     resflt->L = L;
@@ -392,7 +392,7 @@ uintptr_t llz_resample_filter_init(int L, int M, float gain, win_t win_type)
     /*L*M/lm_gcd is the lowest multiplier of L&M*/
     /*resflt->num_in = ((L*M)/lm_gcd)*RES_DEFAULT_NUM_IN;*/
     resflt->num_in = ((L*M)/lm_gcd);
-    while (resflt->num_in < LLZ_DEFAULT_FRAMELEN)
+    while (resflt->num_in < LLZ_RS_DEFAULT_FRAMELEN)
         resflt->num_in *= 2;
 
     resflt->num_out = (resflt->num_in*L)/M;

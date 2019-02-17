@@ -136,8 +136,8 @@ static int llz_checkopt(int argc)
         opt_upfactor = 1;
 
     ratio = ((float)opt_upfactor)/opt_downfactor;
-    if((ratio      > LLZ_RATIO_MAX) || 
-       ((1./ratio) > LLZ_RATIO_MAX)) {
+    if((ratio      > LLZ_RS_RATIO_MAX) || 
+       ((1./ratio) > LLZ_RS_RATIO_MAX)) {
         LLZ_PRINT_ERR("FAIL: ratio not support, you can use cascade method to implement \n");
         return -1;
     }
