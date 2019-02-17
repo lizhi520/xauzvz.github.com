@@ -106,7 +106,8 @@ am_xadenoise_OBJECTS = xadenoise.$(OBJEXT) xadenoise_opt.$(OBJEXT)
 xadenoise_OBJECTS = $(am_xadenoise_OBJECTS)
 xadenoise_DEPENDENCIES = $(top_srcdir)/libxautil/libxautil.la \
 	$(top_srcdir)/libxafilter/libxafilter.la \
-	$(top_srcdir)/libxacodec/libxacodec.la
+	$(top_srcdir)/libxacodec/libxacodec.la \
+	$(top_srcdir)/libxaext/librnnoise/librnnoise.la
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -328,7 +329,8 @@ xadenoise_INCLUDES = xadenoise_opt.h
 xadenoise_LDADD = -lm \
 		   $(top_srcdir)/libxautil/libxautil.la \
 		   $(top_srcdir)/libxafilter/libxafilter.la \
-		   $(top_srcdir)/libxacodec/libxacodec.la
+		   $(top_srcdir)/libxacodec/libxacodec.la \
+		   $(top_srcdir)/libxaext/librnnoise/librnnoise.la
 
 
 #INCLUDES=-I$(top_srcdir)/libxautil -I$(top_srcdir)/libxafilter -I$(top_srcdir)/libxacodec

@@ -25,7 +25,8 @@ xadenoise_INCLUDES=xadenoise_opt.h
 xadenoise_LDADD=-lm \
 		   $(top_srcdir)/libxautil/libxautil.la \
 		   $(top_srcdir)/libxafilter/libxafilter.la \
-		   $(top_srcdir)/libxacodec/libxacodec.la
+		   $(top_srcdir)/libxacodec/libxacodec.la \
+		   $(top_srcdir)/libxaext/librnnoise/librnnoise.la
 
 
 
