@@ -136,17 +136,18 @@ static int do_rnn_denoise(DenoiseState *st, unsigned char *inbuf, unsigned char 
     for (i = 0; i < loop; i++) {
         tmp = inbuf+i*FRAME_SIZE*2;
 
-        for (j = 0; j < FRAME_SIZE; j++) x[i] = tmp[i];
+        for (j = 0; j < FRAME_SIZE; j++) x[j] = tmp[j];
+
         rnnoise_process_frame(st, x, x);
 
         out = outbuf+i*FRAME_SIZE*2;
-        for (j = 0; j < FRAME_SIZE; j++) out[i] = x[i];
+        for (j = 0; j < FRAME_SIZE; j++) out[j] = x[j];
     }
 
     /*memcpy(outbuf, inbuf, bytes_len);*/
 }
 
-int llz_denoise(uintptr_t handle, unsigned char *inbuf, unsigned char * outbuf, int inlen) 
+int llz_denoise(uintptr_t handle, unsigned char *inbuf, int inlen, unsigned char *outbuf, int *outlen) 
 {
     llz_denoise_t *f = (llz_denoise_t *)handle;
     int frame_len, out_len_bytes, out_frame_len;
@@ -156,11 +157,27 @@ int llz_denoise(uintptr_t handle, unsigned char *inbuf, unsigned char * outbuf, 
     int i;
 
     frame_len = inlen /(2*f->channel);
+    printf("--frame_len=%d\n", frame_len);
 
     if (f->channel == 1) {
+        /*llz_resample(f->h_resample[0][0], inbuf, inlen, f->rnn_inbuf[0], &out_len_bytes);*/
         llz_resample(f->h_resample[0][0], inbuf, inlen, f->rnn_inbuf[0], &out_len_bytes);
         do_rnn_denoise(f->rnn_st, f->rnn_inbuf[0], f->rnn_outbuf[0], out_len_bytes);
-        llz_resample(f->h_resample[0][1], f->rnn_outbuf[0], out_len_bytes, outbuf, &out_size);
+        /*llz_resample(f->h_resample[0][1], f->rnn_outbuf[0], out_len_bytes, outbuf, &out_size);*/
+        /*llz_resample(f->h_resample[0][1], f->rnn_inbuf[0], out_len_bytes, outbuf, &out_size);*/
+        /*llz_resample(f->h_resample[0][1], f->rnn_inbuf[0], out_len_bytes, outbuf, &out_size);*/
+
+/*
+        *outlen = inlen;
+        llz_resample(f->h_resample[0][1], f->rnn_outbuf[0], out_len_bytes/3, outbuf, &out_size);
+        llz_resample(f->h_resample[0][1], f->rnn_outbuf[0]+3072, out_len_bytes/3, outbuf+out_size, &out_size);
+        llz_resample(f->h_resample[0][1], f->rnn_outbuf[0]+3072*2, out_len_bytes/3, outbuf+out_size*2, &out_size);
+        *outlen = out_size*3;
+*/
+
+        *outlen = out_len_bytes;
+        memcpy(outbuf, f->rnn_outbuf[0], out_len_bytes);
+        /*memcpy(outbuf, f->rnn_inbuf[0], out_len_bytes);*/
     } else {
         llz_mixer_stereo_left(inbuf, frame_len, f->inbuf[0], &out_frame_len);
         llz_resample(f->h_resample[0][0], f->inbuf[0], inlen>>1, f->rnn_inbuf[0], &out_len_bytes);
