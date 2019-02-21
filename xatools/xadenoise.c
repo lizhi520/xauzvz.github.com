@@ -39,8 +39,9 @@ int main(int argc, char *argv[])
 
     uintptr_t h_denoise;
 
-	short wavsamples_in[LLZ_RS_FRAMELEN_MAX];
-	short wavsamples_out[LLZ_RS_FRAMELEN_MAX];
+	short wavsamples_in[LLZ_RS_FRAMELEN_RNN_MAX];
+	/*short wavsamples_out[LLZ_RS_FRAMELEN_RNN_MAX];*/
+	short wavsamples_out[141120+8192];
     unsigned char * p_wavin  = (unsigned char *)wavsamples_in;
     unsigned char * p_wavout = (unsigned char *)wavsamples_out;
 
@@ -70,7 +71,7 @@ int main(int argc, char *argv[])
 
     fmt1.format = 0x0001;
     fmt1.channels = fmt.channels;
-    fmt1.samplerate = 3*fmt.samplerate;
+    fmt1.samplerate = fmt.samplerate;
     fmt1.bytes_per_sample = 2;
     fmt1.block_align = 2*fmt.samplerate;
     fseek(destfile, 0, SEEK_SET);

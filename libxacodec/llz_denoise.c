@@ -48,14 +48,14 @@ uintptr_t llz_denoise_init(int type, int channel, int sample_rate)
     f->sample_rate = sample_rate;
 
     f->rnn_st = rnnoise_create();
-    f->inbuf[0] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_MAX*2);
-    f->inbuf[1] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_MAX*2);
-    f->outbuf[0] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_MAX*2);
-    f->outbuf[1] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_MAX*2);
-    f->rnn_inbuf[0] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_MAX*2);
-    f->rnn_inbuf[1] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_MAX*2);
-    f->rnn_outbuf[0] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_MAX*2);
-    f->rnn_outbuf[1] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_MAX*2);
+    f->inbuf[0] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_RNN_MAX*2);
+    f->inbuf[1] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_RNN_MAX*2);
+    f->outbuf[0] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_RNN_MAX*2);
+    f->outbuf[1] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_RNN_MAX*2);
+    f->rnn_inbuf[0] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_RNN_MAX*2);
+    f->rnn_inbuf[1] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_RNN_MAX*2);
+    f->rnn_outbuf[0] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_RNN_MAX*2);
+    f->rnn_outbuf[1] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_RNN_MAX*2);
 
     if (type == DENOISE_RNN) {
         if (sample_rate != 48000 &&
@@ -74,22 +74,22 @@ uintptr_t llz_denoise_init(int type, int channel, int sample_rate)
                 f->h_resample[1][0] = f->h_resample[1][1] = 0;
                 break;
             case 44100: 
-                f->h_resample[0][0] = llz_resample_filter_init(160, 147, 1.0, BLACKMAN);
-                f->h_resample[0][1] = llz_resample_filter_init(147, 160, 1.0, BLACKMAN);
-                f->h_resample[1][0] = llz_resample_filter_init(160, 147, 1.0, BLACKMAN);
-                f->h_resample[1][1] = llz_resample_filter_init(147, 160, 1.0, BLACKMAN);
+                f->h_resample[0][0] = llz_resample_filter_rnn_init(160, 147, 1.0, BLACKMAN);
+                f->h_resample[0][1] = llz_resample_filter_rnn_init(147, 160, 1.0, BLACKMAN);
+                f->h_resample[1][0] = llz_resample_filter_rnn_init(160, 147, 1.0, BLACKMAN);
+                f->h_resample[1][1] = llz_resample_filter_rnn_init(147, 160, 1.0, BLACKMAN);
                 break;
             case 32000: 
-                f->h_resample[0][0] = llz_resample_filter_init(3, 2, 1.0, BLACKMAN);
-                f->h_resample[0][1] = llz_resample_filter_init(2, 3, 1.0, BLACKMAN);
-                f->h_resample[1][0] = llz_resample_filter_init(3, 2, 1.0, BLACKMAN);
-                f->h_resample[1][1] = llz_resample_filter_init(2, 3, 1.0, BLACKMAN);
+                f->h_resample[0][0] = llz_resample_filter_rnn_init(3, 2, 1.0, BLACKMAN);
+                f->h_resample[0][1] = llz_resample_filter_rnn_init(2, 3, 1.0, BLACKMAN);
+                f->h_resample[1][0] = llz_resample_filter_rnn_init(3, 2, 1.0, BLACKMAN);
+                f->h_resample[1][1] = llz_resample_filter_rnn_init(2, 3, 1.0, BLACKMAN);
                 break;
             case 16000: 
-                f->h_resample[0][0] = llz_resample_filter_init(3, 1, 1.0, BLACKMAN); 
-                f->h_resample[0][1] = llz_resample_filter_init(1, 3, 1.0, BLACKMAN); 
-                f->h_resample[1][0] = llz_resample_filter_init(3, 1, 1.0, BLACKMAN); 
-                f->h_resample[1][1] = llz_resample_filter_init(1, 3, 1.0, BLACKMAN); 
+                f->h_resample[0][0] = llz_resample_filter_rnn_init(3, 1, 1.0, BLACKMAN); 
+                f->h_resample[0][1] = llz_resample_filter_rnn_init(1, 3, 1.0, BLACKMAN); 
+                f->h_resample[1][0] = llz_resample_filter_rnn_init(3, 1, 1.0, BLACKMAN); 
+                f->h_resample[1][1] = llz_resample_filter_rnn_init(1, 3, 1.0, BLACKMAN); 
                 break;
             default:
                 LLZ_PRINT_ERR("FAIL: error sample rate\n");
@@ -131,7 +131,7 @@ static int do_rnn_denoise(DenoiseState *st, unsigned char *inbuf, unsigned char 
     frame_len = bytes_len >> 1;
     loop = frame_len / FRAME_SIZE;
 
-    /*printf("==>loop= %d\n", loop);*/
+    /*printf("==>fram_len=%d, loop= %d\n", fram_len, loop);*/
 
     for (i = 0; i < loop; i++) {
         tmp = inbuf+i*FRAME_SIZE*2;
@@ -157,27 +157,14 @@ int llz_denoise(uintptr_t handle, unsigned char *inbuf, int inlen, unsigned char
     int i;
 
     frame_len = inlen /(2*f->channel);
-    printf("--frame_len=%d\n", frame_len);
+    /*printf("--frame_len=%d\n", frame_len);*/
 
     if (f->channel == 1) {
-        /*llz_resample(f->h_resample[0][0], inbuf, inlen, f->rnn_inbuf[0], &out_len_bytes);*/
         llz_resample(f->h_resample[0][0], inbuf, inlen, f->rnn_inbuf[0], &out_len_bytes);
         do_rnn_denoise(f->rnn_st, f->rnn_inbuf[0], f->rnn_outbuf[0], out_len_bytes);
-        /*llz_resample(f->h_resample[0][1], f->rnn_outbuf[0], out_len_bytes, outbuf, &out_size);*/
-        /*llz_resample(f->h_resample[0][1], f->rnn_inbuf[0], out_len_bytes, outbuf, &out_size);*/
-        /*llz_resample(f->h_resample[0][1], f->rnn_inbuf[0], out_len_bytes, outbuf, &out_size);*/
+        llz_resample(f->h_resample[0][1], f->rnn_outbuf[0], out_len_bytes, outbuf, &out_size);
 
-/*
-        *outlen = inlen;
-        llz_resample(f->h_resample[0][1], f->rnn_outbuf[0], out_len_bytes/3, outbuf, &out_size);
-        llz_resample(f->h_resample[0][1], f->rnn_outbuf[0]+3072, out_len_bytes/3, outbuf+out_size, &out_size);
-        llz_resample(f->h_resample[0][1], f->rnn_outbuf[0]+3072*2, out_len_bytes/3, outbuf+out_size*2, &out_size);
-        *outlen = out_size*3;
-*/
-
-        *outlen = out_len_bytes;
-        memcpy(outbuf, f->rnn_outbuf[0], out_len_bytes);
-        /*memcpy(outbuf, f->rnn_inbuf[0], out_len_bytes);*/
+        *outlen = out_size;
     } else {
         llz_mixer_stereo_left(inbuf, frame_len, f->inbuf[0], &out_frame_len);
         llz_resample(f->h_resample[0][0], f->inbuf[0], inlen>>1, f->rnn_inbuf[0], &out_len_bytes);

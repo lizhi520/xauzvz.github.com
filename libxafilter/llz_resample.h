@@ -32,6 +32,7 @@ extern "C"
 
 #define LLZ_RS_DEFAULT_FRAMELEN     1024            /* default num of sample in */
 #define LLZ_RS_FRAMELEN_MAX         (160*147+8192)  /* 8192 no meaning, I just set here to safe regarding */
+#define LLZ_RS_FRAMELEN_RNN_MAX     (160*147*3+8192)  /* 8192 no meaning, I just set here to safe regarding */
 
 #define LLZ_RS_RATIO_MAX            16
 
@@ -42,6 +43,7 @@ uintptr_t llz_interp_init(int L, float gain, win_t win_type);
 void      llz_interp_uninit(uintptr_t handle);
 
 uintptr_t llz_resample_filter_init(int L, int M, float gain, win_t win_type);
+uintptr_t llz_resample_filter_rnn_init(int L, int M, float gain, win_t win_type);
 void      llz_resample_filter_uninit(uintptr_t handle);
 
 int llz_get_resample_framelen_bytes(uintptr_t handle);
