@@ -364,6 +364,61 @@ void llz_interp_uninit(uintptr_t handle)
     }
 }
 
+
+//only for 44100, 32000, 16000
+uintptr_t llz_resample_filter_rnn_init(int L, int M, float gain, win_t win_type)
+{
+    llz_resample_filter_t *resflt = NULL;
+    float ratio;
+
+    resflt = (llz_resample_filter_t *)malloc(sizeof(llz_resample_filter_t));
+
+    ratio = ((float)L)/M;
+    if ((ratio      > LLZ_RS_RATIO_MAX) || 
+       ((1./ratio) > LLZ_RS_RATIO_MAX))
+        return -1;
+
+    resflt->L = L;
+    resflt->M = M;
+    resflt->fc = MINV(1./L, 1./M);
+    resflt->gain = gain;
+
+    resflt->bytes_per_sample = 2;       /*default we set to 2 bytes per sample */
+    resflt->out_index = 0;
+
+    timevary_filter_init(&(resflt->tvflt), L, M, resflt->fc,  L, win_type);
+
+    /*L*M/lm_gcd is the lowest multiplier of L&M*/
+    if (L == 160 && M == 147) {
+        resflt->num_in = 70560; //160*147*3;
+    } else if (L == 147 && M == 160) {
+        resflt->num_in = 76800; //160*147;
+    } else if (L == 3 && M == 2) {
+        resflt->num_in = 2880; //480*6;
+    } else if (L == 2 && M == 3) {
+        resflt->num_in = 4320; //480*6*3/2;
+    } else if (L == 3 && M == 1) {
+        resflt->num_in = 1440; //480*3;
+    } else if (L == 1 && M == 3) {
+        resflt->num_in = 1440*3; //480*3*3;
+    }
+
+
+    resflt->num_out = (resflt->num_in*L)/M;
+    resflt->bytes_in = resflt->bytes_per_sample * resflt->num_in;
+    resflt->bytes_out = resflt->bytes_per_sample * resflt->num_out;
+
+    resflt->buf_len = (resflt->tvflt.k + resflt->num_in ) * resflt->bytes_per_sample;
+    resflt->buf = (unsigned char *)malloc(resflt->buf_len * sizeof(char));
+    memset(resflt->buf, 0, sizeof(char)*resflt->buf_len);
+
+    /*printf("===========>%d, %d, %d\n", L, M, resflt->bytes_in);*/
+
+    return (uintptr_t)resflt;
+}
+
+
+
 uintptr_t llz_resample_filter_init(int L, int M, float gain, win_t win_type)
 {
     llz_resample_filter_t *resflt = NULL;
@@ -402,6 +457,7 @@ uintptr_t llz_resample_filter_init(int L, int M, float gain, win_t win_type)
     resflt->buf_len = (resflt->tvflt.k + resflt->num_in ) * resflt->bytes_per_sample;
     resflt->buf = (unsigned char *)malloc(resflt->buf_len * sizeof(char));
     memset(resflt->buf, 0, sizeof(char)*resflt->buf_len);
+
 
     return (uintptr_t)resflt;
 }
