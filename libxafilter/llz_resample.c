@@ -596,6 +596,37 @@ int llz_interp(uintptr_t handle, unsigned char *sample_in, int sample_in_size,
 
 }
 
+int llz_resample_get_first_offset(uintptr_t handle)
+{
+    llz_resample_filter_t *resflt = (llz_resample_filter_t *)handle;
+
+    return resflt->buf_len/resflt->bytes_per_sample - resflt->tvflt.k;
+}
+
+int llz_resample_get_first_out_offset(uintptr_t handle)
+{
+    llz_resample_filter_t *resflt = (llz_resample_filter_t *)handle;
+
+    int L, M;
+    int Q;
+    int offset;
+    
+    /*offset = resflt->buf_len/resflt->bytes_per_sample - resflt->tvflt.k;*/
+
+    L = resflt->L;
+    M = resflt->M;
+    Q = resflt->tvflt.k;
+
+    /*return (int)((offset*resflt->bytes_per_sample*L)/M);*/
+
+    offset = (Q*resflt->bytes_per_sample*L)/M;
+
+    if (offset % 2 != 0)
+        offset += 1;
+
+    return offset;
+}
+
 
 int llz_resample(uintptr_t handle, unsigned char *sample_in, int sample_in_size,
                                    unsigned char *sample_out, int *sample_out_size)
@@ -625,7 +656,7 @@ int llz_resample(uintptr_t handle, unsigned char *sample_in, int sample_in_size,
     
     /*move the old datas (flt_len-1) to the buf[0]*/
     offset = resflt->buf_len/resflt->bytes_per_sample - Q;
-   
+
     for (i = 0; i < Q; i++) 
         pbuf[i] = pbuf[offset+i];
     for (i = 0; i < resflt->num_in; i++)

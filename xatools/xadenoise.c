@@ -31,6 +31,7 @@ int main(int argc, char *argv[])
     int samplerate_in;
     int samplerate_out;
 
+    int is_first         = 1;
     int is_last          = 0;
     int in_len_bytes     = 0;
     int out_len_bytes;
@@ -39,9 +40,9 @@ int main(int argc, char *argv[])
 
     uintptr_t h_denoise;
 
-	short wavsamples_in[LLZ_RS_FRAMELEN_RNN_MAX];
+	short wavsamples_in[LLZ_RS_FRAMELEN_RNN_MAX]={0};
 	/*short wavsamples_out[LLZ_RS_FRAMELEN_RNN_MAX];*/
-	short wavsamples_out[141120+8192]; //big array
+	short wavsamples_out[141120+8192]={0}; //big array
     unsigned char * p_wavin  = (unsigned char *)wavsamples_in;
     unsigned char * p_wavout = (unsigned char *)wavsamples_out;
 
@@ -73,11 +74,14 @@ int main(int argc, char *argv[])
     fmt1.channels = fmt.channels;
     fmt1.samplerate = fmt.samplerate;
     fmt1.bytes_per_sample = 2;
-    fmt1.block_align = 2*fmt.samplerate;
+    fmt1.block_align = 2*fmt.channels;
     fseek(destfile, 0, SEEK_SET);
     llz_wavfmt_writeheader(fmt1, destfile);
 
     in_len_bytes = llz_denoise_framelen_bytes(h_denoise);
+
+    printf("===> origin file size= %d\n", fmt.data_size);
+    printf("===> frame len = %d\n", in_len_bytes);
 
     while(1) {
         if(is_last)
@@ -88,16 +92,54 @@ int main(int argc, char *argv[])
         if(read_len < in_len_bytes)
             is_last = 1;
 
+        printf("1, rl=%d\n", read_len);
         llz_denoise(h_denoise, p_wavin, in_len_bytes, p_wavout, &out_len_bytes);
+        printf("2, wl=%d\n", out_len_bytes);
 
-        fwrite(p_wavout, 1, out_len_bytes, destfile);
-        write_total_size += out_len_bytes;
+        if (is_first) {
+            int offset;
+
+            offset = llz_denoise_first_out_offset(h_denoise);
+            /*printf("offset=%d\n", offset);*/
+            fwrite(p_wavout+offset, 1, out_len_bytes-offset, destfile);
+            is_first = 0;
+            write_total_size += out_len_bytes-offset;
+        } else {
+            if (is_last) {
+                int offset;
+                int diff;
+
+                offset = llz_denoise_first_out_offset(h_denoise);
+                diff = out_len_bytes - read_len;
+
+                fwrite(p_wavout, 1, read_len, destfile);
+                if (diff > offset) {
+                    fwrite(p_wavout+read_len, 1, offset, destfile);
+                    write_total_size += read_len+offset;
+                } else {
+                    fwrite(p_wavout+read_len, 1, diff, destfile);
+                    write_total_size += read_len+diff;
+
+                    memset(p_wavin, 0, in_len_bytes);
+                    llz_denoise(h_denoise, p_wavin, in_len_bytes, p_wavout, &out_len_bytes);
+                    fwrite(p_wavout, 1, (offset-diff), destfile);
+                    write_total_size += (offset-diff);
+                }
+            } else {
+                fwrite(p_wavout, 1, out_len_bytes, destfile);
+                write_total_size += out_len_bytes;
+            }
+        }
 
         frame_index++;
-        printf("the frame = [%d]\r", frame_index);
+        /*printf("the frame = %d\r", frame_index);*/
     }
 
-    fmt1.data_size = write_total_size/fmt1.block_align;
+    fmt1.data_size = write_total_size / fmt1.block_align;
+    printf("the file total size=%d\n", write_total_size);
+    printf("the file block_align =%d\n", fmt1.block_align);
+    printf("the file data size=%d\n", fmt1.data_size);
+
     fseek(destfile, 0, SEEK_SET);
     llz_wavfmt_writeheader(fmt1, destfile);
 

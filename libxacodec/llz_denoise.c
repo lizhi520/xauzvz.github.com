@@ -147,6 +147,19 @@ static int do_rnn_denoise(DenoiseState *st, unsigned char *inbuf, unsigned char 
     /*memcpy(outbuf, inbuf, bytes_len);*/
 }
 
+int llz_denoise_first_out_offset(uintptr_t handle)
+{
+    llz_denoise_t *f = (llz_denoise_t *)handle;
+    int offset_up_resample;
+    int offset_down_resample;
+
+    offset_up_resample = llz_resample_get_first_out_offset(f->h_resample[0][0]);
+    offset_down_resample = llz_resample_get_first_out_offset(f->h_resample[0][1]);
+
+    /*printf("===> %d, %d\n", offset_up_resample, offset_down_resample);*/
+    return offset_up_resample + offset_down_resample + FRAME_SIZE*2;
+}
+
 int llz_denoise(uintptr_t handle, unsigned char *inbuf, int inlen, unsigned char *outbuf, int *outlen) 
 {
     llz_denoise_t *f = (llz_denoise_t *)handle;
