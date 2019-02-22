@@ -55,7 +55,7 @@ int llz_resample(uintptr_t handle, unsigned char *sample_in, int sample_in_size,
                                   unsigned char *sample_out, int *sample_out_size);
 
 int llz_resample_get_first_offset(uintptr_t handle);
-int llz_resample_get_first_out_offset(uintptr_t handle);
+float llz_resample_get_first_out_offset(uintptr_t handle);
 
 #ifdef __cplusplus 
 }

@@ -603,7 +603,7 @@ int llz_resample_get_first_offset(uintptr_t handle)
     return resflt->buf_len/resflt->bytes_per_sample - resflt->tvflt.k;
 }
 
-int llz_resample_get_first_out_offset(uintptr_t handle)
+float llz_resample_get_first_out_offset(uintptr_t handle)
 {
     llz_resample_filter_t *resflt = (llz_resample_filter_t *)handle;
 
@@ -611,18 +611,11 @@ int llz_resample_get_first_out_offset(uintptr_t handle)
     int Q;
     int offset;
     
-    /*offset = resflt->buf_len/resflt->bytes_per_sample - resflt->tvflt.k;*/
-
     L = resflt->L;
     M = resflt->M;
     Q = resflt->tvflt.k;
 
-    /*return (int)((offset*resflt->bytes_per_sample*L)/M);*/
-
-    offset = (Q*resflt->bytes_per_sample*L)/M;
-
-    if (offset % 2 != 0)
-        offset += 1;
+    offset = ((float)(Q*L))/M;
 
     return offset;
 }

@@ -92,9 +92,7 @@ int main(int argc, char *argv[])
         if(read_len < in_len_bytes)
             is_last = 1;
 
-        printf("1, rl=%d\n", read_len);
         llz_denoise(h_denoise, p_wavin, in_len_bytes, p_wavout, &out_len_bytes);
-        printf("2, wl=%d\n", out_len_bytes);
 
         if (is_first) {
             int offset;
@@ -136,9 +134,9 @@ int main(int argc, char *argv[])
     }
 
     fmt1.data_size = write_total_size / fmt1.block_align;
-    printf("the file total size=%d\n", write_total_size);
-    printf("the file block_align =%d\n", fmt1.block_align);
-    printf("the file data size=%d\n", fmt1.data_size);
+    /*printf("the file total size=%d\n", write_total_size);*/
+    /*printf("the file block_align =%d\n", fmt1.block_align);*/
+    /*printf("the file data size=%d\n", fmt1.data_size);*/
 
     fseek(destfile, 0, SEEK_SET);
     llz_wavfmt_writeheader(fmt1, destfile);
