@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
     }
 
     fmt = llz_wavfmt_readheader(sourcefile);
-    printf("format: %d\n", fmt.format);
+    /*printf("format: %d\n", fmt.format);*/
     printf("chn: %d\n", fmt.channels);
     printf("samplerate: %d\n", fmt.samplerate);
     printf("block_align: %d\n", fmt.block_align);
@@ -80,8 +80,8 @@ int main(int argc, char *argv[])
 
     in_len_bytes = llz_denoise_framelen_bytes(h_denoise);
 
-    printf("===> origin file size= %d\n", fmt.data_size);
-    printf("===> frame len = %d\n", in_len_bytes);
+    /*printf("===> origin file size= %d\n", fmt.data_size);*/
+    /*printf("===> frame len = %d\n", in_len_bytes);*/
 
     while(1) {
         if(is_last)
@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
             int offset;
 
             offset = llz_denoise_delay_offset(h_denoise);
-            /*printf("offset=%d\n", offset);*/
+            printf("delay offset=%d\n", offset);
             fwrite(p_wavout+offset, 1, out_len_bytes-offset, destfile);
             is_first = 0;
             write_total_size += out_len_bytes-offset;
