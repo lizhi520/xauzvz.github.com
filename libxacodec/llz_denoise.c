@@ -147,20 +147,28 @@ static int do_rnn_denoise(DenoiseState *st, unsigned char *inbuf, unsigned char 
     /*memcpy(outbuf, inbuf, bytes_len);*/
 }
 
-int llz_denoise_first_out_offset(uintptr_t handle)
+/*FIR delay: (N-1)/(2*fs)*/
+//resample use polyphase filter subfilter Q delay: (Q-1)/2
+//rnn use frame size, but is 48000 transform, should covert to the original frequency offset by sample rate change ratio
+int llz_denoise_delay_offset(uintptr_t handle)
 {
     llz_denoise_t *f = (llz_denoise_t *)handle;
-    float offset_up_resample;
-    float offset_down_resample;
+    int offset_up_resample;
+    int offset_down_resample;
     int offset;
+    int L, M;
 
-    offset_up_resample = llz_resample_get_first_out_offset(f->h_resample[0][0]);
-    offset_down_resample = llz_resample_get_first_out_offset(f->h_resample[0][1]);
+    offset_up_resample = llz_resample_get_delay_offset(f->h_resample[0][0]);
 
-    offset = (int)((offset_up_resample + offset_down_resample + FRAME_SIZE/3)*2);
+    L = llz_get_resample_l(f->h_resample[0][0]);
+    M = llz_get_resample_m(f->h_resample[0][0]);
 
-    if (offset % 2 != 0)
-        offset += 1;
+    //resmplae down offset plus rnn offset
+    offset_down_resample = M*(llz_resample_get_delay_offset(f->h_resample[0][1]))/L;
+    offset = (int)((offset_up_resample + offset_down_resample + M*FRAME_SIZE/L)*2);
+
+    /*printf("od=%d,M=%d,L=%d\n", offset_down_resample, M, L);*/
+    /*printf("offset=%d\n", offset);*/
 
     return offset;
 }

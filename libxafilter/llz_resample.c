@@ -596,28 +596,21 @@ int llz_interp(uintptr_t handle, unsigned char *sample_in, int sample_in_size,
 
 }
 
-int llz_resample_get_first_offset(uintptr_t handle)
+/*
+ * FIR delay: (N-1)/(2*fs)
+ * 
+ *
+ * */
+int llz_resample_get_delay_offset(uintptr_t handle)
 {
     llz_resample_filter_t *resflt = (llz_resample_filter_t *)handle;
-
-    return resflt->buf_len/resflt->bytes_per_sample - resflt->tvflt.k;
-}
-
-float llz_resample_get_first_out_offset(uintptr_t handle)
-{
-    llz_resample_filter_t *resflt = (llz_resample_filter_t *)handle;
-
-    int L, M;
     int Q;
-    int offset;
-    
-    L = resflt->L;
-    M = resflt->M;
+
     Q = resflt->tvflt.k;
 
-    offset = ((float)(Q*L))/M;
+    /*delay = ((1000)*(float)(Q-1)/(2*sample_rate))/(1000/sample_rate);*/
 
-    return offset;
+    return  (Q-1)/2;
 }
 
 
@@ -696,4 +689,18 @@ int llz_get_resample_framelen_bytes(uintptr_t handle)
     llz_resample_filter_t *resflt = (llz_resample_filter_t *)handle;
 
     return resflt->bytes_in;
+}
+
+int llz_get_resample_l(uintptr_t handle)
+{
+    llz_resample_filter_t *resflt = (llz_resample_filter_t *)handle;
+
+    return resflt->L;
+}
+
+int llz_get_resample_m(uintptr_t handle)
+{
+    llz_resample_filter_t *resflt = (llz_resample_filter_t *)handle;
+
+    return resflt->M;
 }

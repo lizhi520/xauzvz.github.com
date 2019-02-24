@@ -54,8 +54,9 @@ int llz_interp(uintptr_t handle, unsigned char *sample_in, int sample_in_size,
 int llz_resample(uintptr_t handle, unsigned char *sample_in, int sample_in_size,
                                   unsigned char *sample_out, int *sample_out_size);
 
-int llz_resample_get_first_offset(uintptr_t handle);
-float llz_resample_get_first_out_offset(uintptr_t handle);
+int llz_resample_get_delay_offset(uintptr_t handle);
+int llz_get_resample_l(uintptr_t handle);
+int llz_get_resample_m(uintptr_t handle);
 
 #ifdef __cplusplus 
 }

@@ -19,7 +19,7 @@ void llz_denoise_uninit(uintptr_t handle);
 int llz_denoise_framelen_bytes(uintptr_t handle);
 int llz_denoise(uintptr_t handle, unsigned char *inbuf, int inlen, unsigned char * outbuf, int *outlen);
 
-int llz_denoise_first_out_offset(uintptr_t handle);
+int llz_denoise_delay_offset(uintptr_t handle);
 
 
 #ifdef __cplusplus 

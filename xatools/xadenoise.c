@@ -97,7 +97,7 @@ int main(int argc, char *argv[])
         if (is_first) {
             int offset;
 
-            offset = llz_denoise_first_out_offset(h_denoise);
+            offset = llz_denoise_delay_offset(h_denoise);
             /*printf("offset=%d\n", offset);*/
             fwrite(p_wavout+offset, 1, out_len_bytes-offset, destfile);
             is_first = 0;
@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
                 int offset;
                 int diff;
 
-                offset = llz_denoise_first_out_offset(h_denoise);
+                offset = llz_denoise_delay_offset(h_denoise);
                 diff = out_len_bytes - read_len;
 
                 fwrite(p_wavout, 1, read_len, destfile);
