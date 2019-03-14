@@ -30,7 +30,7 @@ typedef struct _llz_denoise_t {
     unsigned char *outbuf[2];
     unsigned char *rnn_inbuf[2];
     unsigned char *rnn_outbuf[2];
-    DenoiseState *rnn_st;
+    DenoiseState *rnn_st[2];
 
 
 } llz_denoise_t;
@@ -47,7 +47,8 @@ uintptr_t llz_denoise_init(int type, int channel, int sample_rate)
     f->channel = channel;
     f->sample_rate = sample_rate;
 
-    f->rnn_st = rnnoise_create();
+    f->rnn_st[0] = rnnoise_create();
+    f->rnn_st[1] = rnnoise_create();
     f->inbuf[0] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_RNN_MAX*2);
     f->inbuf[1] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_RNN_MAX*2);
     f->outbuf[0] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_RNN_MAX*2);
@@ -105,7 +106,8 @@ void llz_denoise_uninit(uintptr_t handle)
     llz_denoise_t *f = (llz_denoise_t *)handle;
 
     if (f) {
-        rnnoise_destroy(f->rnn_st);
+        rnnoise_destroy(f->rnn_st[0]);
+        rnnoise_destroy(f->rnn_st[1]);
         free(f);
         f = NULL;
     }
@@ -115,7 +117,7 @@ int llz_denoise_framelen_bytes(uintptr_t handle)
 {
     llz_denoise_t *f = (llz_denoise_t *)handle;
 
-    return llz_get_resample_framelen_bytes(f->h_resample[0][0]);
+    return f->channel * llz_get_resample_framelen_bytes(f->h_resample[0][0]);
 
 }
 
@@ -170,7 +172,7 @@ int llz_denoise_delay_offset(uintptr_t handle)
     /*printf("od=%d,M=%d,L=%d\n", offset_down_resample, M, L);*/
     /*printf("offset=%d\n", offset);*/
 
-    return offset;
+    return f->channel*offset;
 }
 
 int llz_denoise(uintptr_t handle, unsigned char *inbuf, int inlen, unsigned char *outbuf, int *outlen) 
@@ -187,19 +189,19 @@ int llz_denoise(uintptr_t handle, unsigned char *inbuf, int inlen, unsigned char
 
     if (f->channel == 1) {
         llz_resample(f->h_resample[0][0], inbuf, inlen, f->rnn_inbuf[0], &out_len_bytes);
-        do_rnn_denoise(f->rnn_st, f->rnn_inbuf[0], f->rnn_outbuf[0], out_len_bytes);
+        do_rnn_denoise(f->rnn_st[0], f->rnn_inbuf[0], f->rnn_outbuf[0], out_len_bytes);
         llz_resample(f->h_resample[0][1], f->rnn_outbuf[0], out_len_bytes, outbuf, &out_size);
 
         *outlen = out_size;
     } else {
         llz_mixer_stereo_left(inbuf, frame_len, f->inbuf[0], &out_frame_len);
         llz_resample(f->h_resample[0][0], f->inbuf[0], inlen>>1, f->rnn_inbuf[0], &out_len_bytes);
-        do_rnn_denoise(f->rnn_st, f->rnn_inbuf[0], f->rnn_outbuf[0], out_len_bytes);
+        do_rnn_denoise(f->rnn_st[0], f->rnn_inbuf[0], f->rnn_outbuf[0], out_len_bytes);
         llz_resample(f->h_resample[0][1], f->rnn_outbuf[0], out_len_bytes, f->outbuf[0], &out_size);
 
         llz_mixer_stereo_right(inbuf, frame_len, f->inbuf[1], &out_frame_len);
         llz_resample(f->h_resample[1][0], f->inbuf[1], inlen>>1, f->rnn_inbuf[1], &out_len_bytes);
-        do_rnn_denoise(f->rnn_st, f->rnn_inbuf[1], f->rnn_outbuf[1], out_len_bytes);
+        do_rnn_denoise(f->rnn_st[1], f->rnn_inbuf[1], f->rnn_outbuf[1], out_len_bytes);
         llz_resample(f->h_resample[1][1], f->rnn_outbuf[1], out_len_bytes, f->outbuf[1], &out_size);
 
         llz_mixer_lr2stereo(f->outbuf[0], f->outbuf[1], out_size>>1, outbuf, &out_size);
