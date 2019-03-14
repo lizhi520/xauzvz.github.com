@@ -205,6 +205,8 @@ int llz_denoise(uintptr_t handle, unsigned char *inbuf, int inlen, unsigned char
         llz_resample(f->h_resample[1][1], f->rnn_outbuf[1], out_len_bytes, f->outbuf[1], &out_size);
 
         llz_mixer_lr2stereo(f->outbuf[0], f->outbuf[1], out_size>>1, outbuf, &out_size);
+
+        *outlen = 2*f->channel*out_size;
     }
 
     return 0;
