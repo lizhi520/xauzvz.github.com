@@ -40,9 +40,9 @@ int main(int argc, char *argv[])
 
     uintptr_t h_denoise;
 
-	short wavsamples_in[LLZ_RS_FRAMELEN_RNN_MAX]={0};
+	short wavsamples_in[2*LLZ_RS_FRAMELEN_RNN_MAX]={0};
 	/*short wavsamples_out[LLZ_RS_FRAMELEN_RNN_MAX];*/
-	short wavsamples_out[141120+8192]={0}; //big array
+	short wavsamples_out[2*(141120+8192)]={0}; //big array
     unsigned char * p_wavin  = (unsigned char *)wavsamples_in;
     unsigned char * p_wavout = (unsigned char *)wavsamples_out;
 
@@ -132,6 +132,7 @@ int main(int argc, char *argv[])
 
         frame_index++;
         /*printf("the frame = %d\r", frame_index);*/
+        printf("the frame = %d\n", frame_index);
     }
 
     fmt1.data_size = write_total_size / fmt1.block_align;

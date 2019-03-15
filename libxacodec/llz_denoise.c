@@ -49,14 +49,14 @@ uintptr_t llz_denoise_init(int type, int channel, int sample_rate)
 
     f->rnn_st[0] = rnnoise_create();
     f->rnn_st[1] = rnnoise_create();
-    f->inbuf[0] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_RNN_MAX*2);
-    f->inbuf[1] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_RNN_MAX*2);
-    f->outbuf[0] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_RNN_MAX*2);
-    f->outbuf[1] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_RNN_MAX*2);
-    f->rnn_inbuf[0] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_RNN_MAX*2);
-    f->rnn_inbuf[1] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_RNN_MAX*2);
-    f->rnn_outbuf[0] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_RNN_MAX*2);
-    f->rnn_outbuf[1] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_RNN_MAX*2);
+    f->inbuf[0] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_RNN_MAX*2*channel);
+    f->inbuf[1] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_RNN_MAX*2*channel);
+    f->outbuf[0] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_RNN_MAX*2*channel);
+    f->outbuf[1] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_RNN_MAX*2*channel);
+    f->rnn_inbuf[0] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_RNN_MAX*2*channel);
+    f->rnn_inbuf[1] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_RNN_MAX*2*channel);
+    f->rnn_outbuf[0] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_RNN_MAX*2*channel);
+    f->rnn_outbuf[1] = (unsigned char *)calloc(1, LLZ_RS_FRAMELEN_RNN_MAX*2*channel);
 
     if (type == DENOISE_RNN) {
         if (sample_rate != 48000 &&
@@ -134,7 +134,7 @@ static int do_rnn_denoise(DenoiseState *st, unsigned char *inbuf, unsigned char 
     loop = frame_len / FRAME_SIZE;
 
     /*printf("==>fram_len=%d, loop= %d\n", fram_len, loop);*/
-
+#if 1 
     for (i = 0; i < loop; i++) {
         tmp = inbuf+i*FRAME_SIZE*2;
 
@@ -145,8 +145,9 @@ static int do_rnn_denoise(DenoiseState *st, unsigned char *inbuf, unsigned char 
         out = outbuf+i*FRAME_SIZE*2;
         for (j = 0; j < FRAME_SIZE; j++) out[j] = x[j];
     }
-
-    /*memcpy(outbuf, inbuf, bytes_len);*/
+#else
+    memcpy(outbuf, inbuf, bytes_len);
+#endif
 }
 
 /*FIR delay: (N-1)/(2*fs)*/

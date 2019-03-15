@@ -655,7 +655,7 @@ int llz_resample(uintptr_t handle, unsigned char *sample_in, int sample_in_size,
     *sample_out_size = (sample_in_size * resflt->L)/resflt->M;
 
     /*for (i = 0; i < resflt->num_out; i++) {*/
-    for (i = 0; i < *sample_out_size; i++) {
+    for (i = 0; i < (*sample_out_size/2); i++) {
         float y= 0.0;
 
         xp = x + (i*M)/L;
