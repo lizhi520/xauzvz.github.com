@@ -133,7 +133,7 @@ LTLIBRARIES = $(lib_LTLIBRARIES)
 libxafilter_la_DEPENDENCIES =
 am__objects_1 = llz_corr.lo llz_fft.lo llz_fft_fixed.lo llz_fir.lo \
 	llz_iir.lo llz_levinson.lo llz_lpc.lo llz_mdct.lo \
-	llz_mdct_fixed.lo llz_resample.lo llz_mixer.lo
+	llz_mdct_fixed.lo llz_resample.lo llz_mixer.lo llz_lms.lo
 am_libxafilter_la_OBJECTS = $(am__objects_1)
 libxafilter_la_OBJECTS = $(am_libxafilter_la_OBJECTS)
 AM_V_lt = $(am__v_lt_$(V))
@@ -158,9 +158,9 @@ am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = ./$(DEPDIR)/llz_corr.Plo ./$(DEPDIR)/llz_fft.Plo \
 	./$(DEPDIR)/llz_fft_fixed.Plo ./$(DEPDIR)/llz_fir.Plo \
 	./$(DEPDIR)/llz_iir.Plo ./$(DEPDIR)/llz_levinson.Plo \
-	./$(DEPDIR)/llz_lpc.Plo ./$(DEPDIR)/llz_mdct.Plo \
-	./$(DEPDIR)/llz_mdct_fixed.Plo ./$(DEPDIR)/llz_mixer.Plo \
-	./$(DEPDIR)/llz_resample.Plo
+	./$(DEPDIR)/llz_lms.Plo ./$(DEPDIR)/llz_lpc.Plo \
+	./$(DEPDIR)/llz_mdct.Plo ./$(DEPDIR)/llz_mdct_fixed.Plo \
+	./$(DEPDIR)/llz_mixer.Plo ./$(DEPDIR)/llz_resample.Plo
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -326,7 +326,7 @@ top_builddir = ..
 top_srcdir = ..
 xafilter_src = llz_corr.c llz_fft.c llz_fft_fixed.c llz_fir.c\
 			 llz_iir.c llz_levinson.c llz_lpc.c llz_mdct.c llz_mdct_fixed.c llz_resample.c\
-			 llz_mixer.c
+			 llz_mixer.c llz_lms.c
 
 lib_LTLIBRARIES = libxafilter.la 
 libxafilter_la_SOURCES = $(xafilter_src)
@@ -334,7 +334,7 @@ libxafilter_la_LIBADD = -lm
 libxafilter_la_includedir = $(includedir)/libxafilter
 libxafilter_la_include_HEADERS = llz_corr.h llz_fft.h llz_fft_fixed.h llz_fir.h\
 							   llz_iir.h llz_levinson.h llz_lpc.h llz_mdct.h llz_mdct_fixed.h llz_resample.h\
-							   llz_mixer.h
+							   llz_mixer.h llz_lms.h
 
 all: all-am
 
@@ -420,6 +420,7 @@ include ./$(DEPDIR)/llz_fft_fixed.Plo # am--include-marker
 include ./$(DEPDIR)/llz_fir.Plo # am--include-marker
 include ./$(DEPDIR)/llz_iir.Plo # am--include-marker
 include ./$(DEPDIR)/llz_levinson.Plo # am--include-marker
+include ./$(DEPDIR)/llz_lms.Plo # am--include-marker
 include ./$(DEPDIR)/llz_lpc.Plo # am--include-marker
 include ./$(DEPDIR)/llz_mdct.Plo # am--include-marker
 include ./$(DEPDIR)/llz_mdct_fixed.Plo # am--include-marker
@@ -614,6 +615,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/llz_fir.Plo
 	-rm -f ./$(DEPDIR)/llz_iir.Plo
 	-rm -f ./$(DEPDIR)/llz_levinson.Plo
+	-rm -f ./$(DEPDIR)/llz_lms.Plo
 	-rm -f ./$(DEPDIR)/llz_lpc.Plo
 	-rm -f ./$(DEPDIR)/llz_mdct.Plo
 	-rm -f ./$(DEPDIR)/llz_mdct_fixed.Plo
@@ -670,6 +672,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/llz_fir.Plo
 	-rm -f ./$(DEPDIR)/llz_iir.Plo
 	-rm -f ./$(DEPDIR)/llz_levinson.Plo
+	-rm -f ./$(DEPDIR)/llz_lms.Plo
 	-rm -f ./$(DEPDIR)/llz_lpc.Plo
 	-rm -f ./$(DEPDIR)/llz_mdct.Plo
 	-rm -f ./$(DEPDIR)/llz_mdct_fixed.Plo

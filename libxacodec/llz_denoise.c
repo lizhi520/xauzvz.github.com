@@ -16,7 +16,7 @@
 #include "libxaext/librnnoise/rnnoise.h"
 
 //this is the rnn frame size
-#define FRAME_SIZE 480
+#define RNN_FRAME_SIZE 480
 
 typedef struct _llz_denoise_t {
     int type;
@@ -126,24 +126,24 @@ static int do_rnn_denoise(DenoiseState *st, unsigned char *inbuf, unsigned char 
 {
     int frame_len;
     int loop;
-    float x[FRAME_SIZE];
+    float x[RNN_FRAME_SIZE];
     short *tmp, *out;
     int i, j;
 
     frame_len = bytes_len >> 1;
-    loop = frame_len / FRAME_SIZE;
+    loop = frame_len / RNN_FRAME_SIZE;
 
     /*printf("==>fram_len=%d, loop= %d\n", fram_len, loop);*/
 #if 1 
     for (i = 0; i < loop; i++) {
-        tmp = inbuf+i*FRAME_SIZE*2;
+        tmp = inbuf+i*RNN_FRAME_SIZE*2;
 
-        for (j = 0; j < FRAME_SIZE; j++) x[j] = tmp[j];
+        for (j = 0; j < RNN_FRAME_SIZE; j++) x[j] = tmp[j];
 
         rnnoise_process_frame(st, x, x);
 
-        out = outbuf+i*FRAME_SIZE*2;
-        for (j = 0; j < FRAME_SIZE; j++) out[j] = x[j];
+        out = outbuf+i*RNN_FRAME_SIZE*2;
+        for (j = 0; j < RNN_FRAME_SIZE; j++) out[j] = x[j];
     }
 #else
     memcpy(outbuf, inbuf, bytes_len);
@@ -168,7 +168,7 @@ int llz_denoise_delay_offset(uintptr_t handle)
 
     //resmplae down offset plus rnn offset
     offset_down_resample = M*(llz_resample_get_delay_offset(f->h_resample[0][1]))/L;
-    offset = (int)((offset_up_resample + offset_down_resample + M*FRAME_SIZE/L)*2);
+    offset = (int)((offset_up_resample + offset_down_resample + M*RNN_FRAME_SIZE/L)*2);
 
     /*printf("od=%d,M=%d,L=%d\n", offset_down_resample, M, L);*/
     /*printf("offset=%d\n", offset);*/
