@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
     in_len_bytes = llz_denoise_framelen_bytes(h_denoise);
 
     /*printf("===> origin file size= %d\n", fmt.data_size);*/
-    printf("===> frame len = %d\n", in_len_bytes);
+    /*printf("===> frame len = %d\n", in_len_bytes);*/
 
     while(1) {
         if(is_last)
@@ -131,8 +131,8 @@ int main(int argc, char *argv[])
         }
 
         frame_index++;
-        /*printf("the frame = %d\r", frame_index);*/
-        printf("the frame = %d\n", frame_index);
+        printf("the frame = %d\r", frame_index);
+        /*printf("the frame = %d\n", frame_index);*/
     }
 
     fmt1.data_size = write_total_size / fmt1.block_align;
