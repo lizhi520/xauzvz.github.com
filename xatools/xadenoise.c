@@ -80,8 +80,8 @@ int main(int argc, char *argv[])
 
     in_len_bytes = llz_denoise_framelen_bytes(h_denoise);
 
-    /*printf("===> origin file size= %d\n", fmt.data_size);*/
-    /*printf("===> frame len = %d\n", in_len_bytes);*/
+    printf("===> origin file size= %d\n", fmt.data_size);
+    printf("===> frame len = %d\n", in_len_bytes);
 
     while(1) {
         if(is_last)
@@ -94,6 +94,7 @@ int main(int argc, char *argv[])
 
         llz_denoise(h_denoise, p_wavin, in_len_bytes, p_wavout, &out_len_bytes);
         /*printf("111111111=%d\n", out_len_bytes);*/
+        /*printf("--------> %d, %d, %d, %d\n", ((short *)p_wavin)[16], ((short *)p_wavout)[16], ((short *)p_wavin)[0], ((short *)p_wavout)[0]);*/
 
         frame_index++;
         printf("the frame = %d\r", frame_index);

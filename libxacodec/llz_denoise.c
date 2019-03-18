@@ -161,7 +161,10 @@ int llz_denoise_framelen_bytes(uintptr_t handle)
 {
     llz_denoise_t *f = (llz_denoise_t *)handle;
 
-    return f->channel * llz_get_resample_framelen_bytes(f->h_resample[0][0]);
+    if (f->type == DENOISE_RNN) 
+        return f->channel * llz_get_resample_framelen_bytes(f->h_resample[0][0]);
+    else 
+        return f->channel * HOP * 2;
 
 }
 
@@ -248,11 +251,11 @@ static int do_spectrum_denoise(llz_denoise_t *f, unsigned char *inbuf, int in_by
 	for (i = 0 ; i < chn ; i++) {
 		data_in = f->data_in[i];
 		data_out = f->data_out[i];
-		
+
 		memmove(data_in, data_in+HOP, sizeof(short)*OVERLAP);
 		
 		if (chn == 1) {
-			memcpy(data_in+OVERLAP, inbuf, sizeof(short)*HOP*chn);
+			memcpy(data_in+OVERLAP, inbuf, sizeof(short)*HOP);
 		} else {
 			if(i == 0) {
 				for(j = 0 ; j < HOP ; j++)
@@ -275,7 +278,9 @@ static int do_spectrum_denoise(llz_denoise_t *f, unsigned char *inbuf, int in_by
 
 		if (f->type == DENOISE_LMS) {
 			llz_lms(f->h_lms[i], data_in, data_out, HOP); 
+            /*printf("-------yyyyyyyyyyyy: %d, %d\n", data_in[0], data_out[0]);*/
 		}
+
 		
 #if 0
 		if ((f->type == DENOISE_FFT_LMS) || (f->type == DENOISE_FFT_LMS_LPF)) {
