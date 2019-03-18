@@ -11,7 +11,11 @@ extern "C"
 
 enum{
     DENOISE_RNN = 0,
-    DENOISE_LMS,
+    DENOISE_LMS = 1,
+    DENOISE_FFT_LMS = 2,
+    DENOISE_FFT_LMS_LPF = 3,
+    DENOISE_LEARN1 = 4,
+    DENOISE_LEARN2 = 5,
 };
 
 uintptr_t llz_denoise_init(int type, int channel, int sample_rate);

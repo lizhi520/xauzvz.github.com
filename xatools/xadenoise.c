@@ -95,6 +95,12 @@ int main(int argc, char *argv[])
         llz_denoise(h_denoise, p_wavin, in_len_bytes, p_wavout, &out_len_bytes);
         /*printf("111111111=%d\n", out_len_bytes);*/
 
+        frame_index++;
+        printf("the frame = %d\r", frame_index);
+
+        if (out_len_bytes == 0)
+            continue;
+
         if (is_first) {
             int offset;
 
@@ -130,9 +136,6 @@ int main(int argc, char *argv[])
             }
         }
 
-        frame_index++;
-        printf("the frame = %d\r", frame_index);
-        /*printf("the frame = %d\n", frame_index);*/
     }
 
     fmt1.data_size = write_total_size / fmt1.block_align;

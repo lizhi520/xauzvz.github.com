@@ -166,7 +166,7 @@ int llz_denoise_framelen_bytes(uintptr_t handle)
 }
 
 
-static void do_rnn_denoise(DenoiseState *st, unsigned char *inbuf, unsigned char *outbuf, int bytes_len)
+static void do_rnn_denoise_mono(DenoiseState *st, unsigned char *inbuf, unsigned char *outbuf, int bytes_len)
 {
     int frame_len;
     int loop;
@@ -180,13 +180,13 @@ static void do_rnn_denoise(DenoiseState *st, unsigned char *inbuf, unsigned char
     /*printf("==>fram_len=%d, loop= %d\n", fram_len, loop);*/
 #if 1 
     for (i = 0; i < loop; i++) {
-        tmp = inbuf+i*RNN_FRAME_SIZE*2;
+        tmp = (short *)(inbuf+i*RNN_FRAME_SIZE*2);
 
         for (j = 0; j < RNN_FRAME_SIZE; j++) x[j] = tmp[j];
 
         rnnoise_process_frame(st, x, x);
 
-        out = outbuf+i*RNN_FRAME_SIZE*2;
+        out = (short *)(outbuf+i*RNN_FRAME_SIZE*2);
         for (j = 0; j < RNN_FRAME_SIZE; j++) out[j] = x[j];
     }
 #else
@@ -197,9 +197,8 @@ static void do_rnn_denoise(DenoiseState *st, unsigned char *inbuf, unsigned char
 /*FIR delay: (N-1)/(2*fs)*/
 //resample use polyphase filter subfilter Q delay: (Q-1)/2
 //rnn use frame size, but is 48000 transform, should covert to the original frequency offset by sample rate change ratio
-int llz_denoise_delay_offset(uintptr_t handle)
+static int get_rnn_delay_offset(llz_denoise_t *f)
 {
-    llz_denoise_t *f = (llz_denoise_t *)handle;
     int offset_up_resample;
     int offset_down_resample;
     int offset;
@@ -211,6 +210,7 @@ int llz_denoise_delay_offset(uintptr_t handle)
     M = llz_get_resample_m(f->h_resample[0][0]);
 
     //resmplae down offset plus rnn offset
+    //rnn is work on 48k, so the offset should convert it from 48 offset to other samplerate offset by multiply M/L
     offset_down_resample = M*(llz_resample_get_delay_offset(f->h_resample[0][1]))/L;
     offset = (int)((offset_up_resample + offset_down_resample + M*RNN_FRAME_SIZE/L)*2);
 
@@ -220,7 +220,19 @@ int llz_denoise_delay_offset(uintptr_t handle)
     return f->channel*offset;
 }
 
-static int do_spectrum_denoise(llz_denoise_t *f, unsigned char *inbuf, unsigned char *outbuf, int in_bytes_len)
+
+int llz_denoise_delay_offset(uintptr_t handle)
+{
+    llz_denoise_t *f = (llz_denoise_t *)handle;
+
+    if (f->type == DENOISE_RNN) {
+        return get_rnn_delay_offset(f);
+    } else {
+        return 0;
+    }
+}
+
+static int do_spectrum_denoise(llz_denoise_t *f, unsigned char *inbuf, int in_bytes_len, unsigned char *outbuf)
 {
 	int i,j;
 
@@ -262,10 +274,11 @@ static int do_spectrum_denoise(llz_denoise_t *f, unsigned char *inbuf, unsigned 
 		}
 
 		if (f->type == DENOISE_LMS) {
-			LMS_FLT(&nr->lmsfilter[i],data_in,data_out,HOP); 
+			llz_lms(f->h_lms[i], data_in, data_out, HOP); 
 		}
 		
-		if ((f->type == 2) || (f->type == 3)) {
+#if 0
+		if ((f->type == DENOISE_FFT_LMS) || (f->type == DENOISE_FFT_LMS_LPF)) {
 			SpectrumReduction(&nr->srd,data_in,data_out,i);
 
 			data_out = (short *)f->data_out[i];
@@ -280,7 +293,7 @@ static int do_spectrum_denoise(llz_denoise_t *f, unsigned char *inbuf, unsigned 
 
 		}
 
-		if(f->type == 3) {
+		if(f->type == DENOISE_FFT_LMS_LPF) {
 			data_out = f->data_out[i];
 
 			for(j = 0 ; j < HOP ; j++) {
@@ -304,127 +317,40 @@ static int do_spectrum_denoise(llz_denoise_t *f, unsigned char *inbuf, unsigned 
 		}
 
 
-		if((nr->nr_mode == 4)||(nr->nr_mode == 5)) {
+		if((f->type == DENOISE_LEARN1) || (f->type == DENOISE_LEARN2)) {
 		
-			if(nr->nr_mode == 4)
-				SpectrumReductionWithLearn(&nr->srd,data_in,data_out,i,nr->noise_learn[i]); //?Ƚ????׼?ȥ??
+			if(f->type == DENOISE_LEARN1)
+				SpectrumReductionWithLearn(&nr->srd,data_in,data_out,i,nr->noise_learn[i]);
 			if(nr->nr_mode == 5)
-				SpectrumReductionWithLearn(&nr->srd,data_in,data_out,i,nr->noise_learn[i]); //?Ƚ????׼?ȥ??
+				SpectrumReductionWithLearn(&nr->srd,data_in,data_out,i,nr->noise_learn[i]);
 
 			data_out = (short *)nr->data_out[i];
 		
 			for(j = 0 ; j < HOP ; j++)
-			{
 				data_tmp_in[j] = data_out[j];				
-			}
 			LMS_FLT(&nr->lmsfilter[i],data_tmp_in,data_tmp_out,HOP); 
 			for(j = 0 ; j < HOP ; j++)
-			{
 				data_out[j] = data_tmp_out[j];
-			}
-		
-		}
-
-
-#if 1			
-		
-		if(nr->nr_mode == 6)	//һ??ģʽ??????ģʽ????Ҫ?׼����???
-		{
-
-			SpectrumReductionStrongFreq(&nr->srd,data_in,data_out,i);	//?Ƚ????׼?ȥ??
-
-			//????????LMS??ǿ
-			data_out = (short *)nr->data_out[i];
-
-			for(j = 0 ; j < HOP ; j++)
-			{
-				data_tmp_in[j] = data_out[j];				
-			}
-			LMS_FLT(&nr->lmsfilter[i],data_tmp_in,data_tmp_out,HOP); 
-			for(j = 0 ; j < HOP ; j++)
-			{
-				data_out[j] = data_tmp_out[j];
-			}
-
-		}
-
-#endif
-
-#if 1			
-		
-		if(nr->nr_mode == 7)	
-		{
-			SF_ReductionMono(nr->SF_HANDLE,data_in,data_out,HOP,i);
-
-	//		SpectrumReductionStrongFreq(&nr->srd,data_in,data_out,i);	//?Ƚ????׼?ȥ??
-
-			//????????LMS??ǿ
-			data_out = (short *)nr->data_out[i];
-
-			for(j = 0 ; j < HOP ; j++)
-			{
-				data_tmp_in[j] = data_out[j];				
-			}
-			LMS_FLT(&nr->lmsfilter[i],data_tmp_in,data_tmp_out,HOP); 
-			for(j = 0 ; j < HOP ; j++)
-			{
-				data_out[j] = data_tmp_out[j];
-			}
-
-		}
-
-#endif
-
-
-
-
-
-#if 0
-		{
-			for(j = 0 ; j < FRAME_BUF ; j++)
-			{
-				data_tmp_in[j] = data_out[j];				
-			}		
-			MedianFilting(data_tmp_in,data_tmp_out,HOP);
-			for(j = 0 ; j < HOP ; j++)
-			{
-				data_out[j] = data_tmp_out[j];
-			}
-			
 		}
 #endif
-
 
 	}
 
-	if(chn == 1)
-		memcpy((BYTE *)outbuf,(BYTE *)nr->data_out[0],sizeof(short)*HOP*chn);
-	else
-	{
-		for(i = 0; i < HOP; i++)
-		{
-			p_outbuf[2*i] = nr->data_out[0][i];
-			p_outbuf[2*i+1] = nr->data_out[1][i];
-			
+	if (chn == 1) {
+		memcpy((unsigned char *)outbuf, (unsigned char *)f->data_out[0], sizeof(short)*HOP*chn);
+    } else {
+		for(i = 0; i < HOP; i++) {
+			p_outbuf[2*i] = f->data_out[0][i];
+			p_outbuf[2*i+1] = f->data_out[1][i];
 		}
-	
 	}
 
-	
-	return wavinsize;
-
-
-
-
-
-
+	return in_bytes_len;
 }
 
 
-
-int llz_denoise(uintptr_t handle, unsigned char *inbuf, int inlen, unsigned char *outbuf, int *outlen) 
+static int do_rnn_denoise(llz_denoise_t *f, unsigned char *inbuf, int inlen, unsigned char *outbuf)
 {
-    llz_denoise_t *f = (llz_denoise_t *)handle;
     int frame_len, out_len_bytes, out_frame_len;
     int out_size;
 
@@ -436,25 +362,40 @@ int llz_denoise(uintptr_t handle, unsigned char *inbuf, int inlen, unsigned char
 
     if (f->channel == 1) {
         llz_resample(f->h_resample[0][0], inbuf, inlen, f->rnn_inbuf[0], &out_len_bytes);
-        do_rnn_denoise(f->rnn_st[0], f->rnn_inbuf[0], f->rnn_outbuf[0], out_len_bytes);
+        do_rnn_denoise_mono(f->rnn_st[0], f->rnn_inbuf[0], f->rnn_outbuf[0], out_len_bytes);
         llz_resample(f->h_resample[0][1], f->rnn_outbuf[0], out_len_bytes, outbuf, &out_size);
 
-        *outlen = out_size;
+        return out_size;
     } else {
         llz_mixer_stereo_left(inbuf, frame_len, f->inbuf[0], &out_frame_len);
         llz_resample(f->h_resample[0][0], f->inbuf[0], inlen>>1, f->rnn_inbuf[0], &out_len_bytes);
-        do_rnn_denoise(f->rnn_st[0], f->rnn_inbuf[0], f->rnn_outbuf[0], out_len_bytes);
+        do_rnn_denoise_mono(f->rnn_st[0], f->rnn_inbuf[0], f->rnn_outbuf[0], out_len_bytes);
         llz_resample(f->h_resample[0][1], f->rnn_outbuf[0], out_len_bytes, f->outbuf[0], &out_size);
 
         llz_mixer_stereo_right(inbuf, frame_len, f->inbuf[1], &out_frame_len);
         llz_resample(f->h_resample[1][0], f->inbuf[1], inlen>>1, f->rnn_inbuf[1], &out_len_bytes);
-        do_rnn_denoise(f->rnn_st[1], f->rnn_inbuf[1], f->rnn_outbuf[1], out_len_bytes);
+        do_rnn_denoise_mono(f->rnn_st[1], f->rnn_inbuf[1], f->rnn_outbuf[1], out_len_bytes);
         llz_resample(f->h_resample[1][1], f->rnn_outbuf[1], out_len_bytes, f->outbuf[1], &out_size);
 
         llz_mixer_lr2stereo(f->outbuf[0], f->outbuf[1], out_size>>1, outbuf, &out_size);
 
-        *outlen = 2*f->channel*out_size;
+        return 2*f->channel*out_size;
     }
+}
+
+
+int llz_denoise(uintptr_t handle, unsigned char *inbuf, int inlen, unsigned char *outbuf, int *outlen) 
+{
+    llz_denoise_t *f = (llz_denoise_t *)handle;
+
+    switch (f->type) {
+        case DENOISE_RNN:
+            *outlen = do_rnn_denoise(f, inbuf, inlen, outbuf);
+            break;
+        default:
+            *outlen = do_spectrum_denoise(f, inbuf, inlen, outbuf);
+    }
+
 
     return 0;
 }
