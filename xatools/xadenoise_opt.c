@@ -112,7 +112,11 @@ static int llz_checkopt(int argc)
     }
 
     if (opt_type != DENOISE_RNN && 
-        opt_type != DENOISE_LMS) {
+        opt_type != DENOISE_LMS &&
+        opt_type != DENOISE_FFT_LMS &&
+        opt_type != DENOISE_FFT_LMS_LPF &&
+        opt_type != DENOISE_LEARN1 &&
+        opt_type != DENOISE_LEARN2) {
         LLZ_PRINT_ERR("FAIL: unsupported denoise type \n");
         return -1;
     }

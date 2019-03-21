@@ -9,10 +9,16 @@
   author  : luolongzhi ( luolongzhi@gmail.com )
 */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <memory.h>
+
 #include "libxautil/llz_print.h"
 #include "libxafilter/llz_resample.h"
 #include "libxafilter/llz_mixer.h"
 #include "libxafilter/llz_lms.h"
+#include "libxafilter/llz_fft.h"
 #include "llz_denoise.h"
 #include "libxaext/librnnoise/rnnoise.h"
 
@@ -37,8 +43,13 @@
 #define	WINDOW_LEN		FRAME_BUF		//2048 	2048 is the framesize for fft
 #define	WINDOW_HALFLEN	FRAME_BUF/2
 
-#define	WINDOW_SCALE	16
+#define	WINDOW_SCALE	15
 #define	WINDOW_SCALE_V	(1<<WINDOW_SCALE)
+
+
+#define	MUL_32_16_RMX(a,b,c)	(int)(((__int64)(a) *(__int64)(b))>>(c))
+#define	COS_SIN_SCALE		    15
+#define	COS_SIN_SCALE_V	        (1<<COS_SIN_SCALE)
 
 
 typedef struct _llz_denoise_t {
@@ -59,16 +70,317 @@ typedef struct _llz_denoise_t {
     //nr common context
 	short data_in[2][FRAME_BUF];
 	short data_out[2][FRAME_BUF];
-	
 	int data_in_buf_size;
 
     //lms filter
     uintptr_t h_lms[2];
 
+    //fft spectrum fixed point denoise
+	uintptr_t h_fft[2];
+	float fft_work_buf[2][FRAME_BUF*2];
+	float window[FRAME_BUF];
+	float mag[2][FFT_PROCESS_N];
+	float real[2][FFT_PROCESS_N];
+	float imag[2][FFT_PROCESS_N];
+	float cos_phi[2][FFT_PROCESS_N];
+	float sin_phi[2][FFT_PROCESS_N];
+	float cpu_overlap_buf[2][FRAME_BUF];
+	float mag_last[2][FFT_PROCESS_N];
+	float mag_avg[2][FFT_PROCESS_N];
+	float noise_gain;
+	int   strongfreq_index;
+
+
 } llz_denoise_t;
 
+static int mag_noise_tab1[FFT_PROCESS_N]={
+	8466 ,
+ 5061 ,	 1247 ,	 1403 ,	 1653 ,	 2016 ,	 2727 ,	 3642 ,	 3996 ,
+ 2966 ,	 2154 ,	 2102 ,	 2429 ,	 2317 ,	 2275 ,	 2379 ,	 2191 ,
+ 2348 ,	 2649 ,	 2486 ,	 1946 ,	 1810 ,	 2112 ,	 2219 ,	 2100 ,
+ 1992 ,	 1702 ,	 1414 ,	 1320 ,	 1437 ,	 1302 ,	 1122 ,	 1183 ,
+ 1084 ,	 1039 ,	 1104 ,	 1169 ,	 1046 ,	 1249 ,	 1114 ,	 980 ,
+ 980 ,	 1072 ,	 992 ,	 891 ,	 1000 ,	 840 ,	 1000 ,	 975 ,
+ 903 ,	 954 ,	 1110 ,	 896 ,	 820 ,	 792 ,	 749 ,	 935 ,
+ 1307 ,	 1382 ,	 1378 ,	 1140 ,	 1272 ,	 1336 ,	 1055 ,	 772 ,
+ 833 ,	 693 ,	 643 ,	 715 ,	 677 ,	 661 ,	 723 ,	 801 ,
+ 769 ,	 733 ,	 839 ,	 637 ,	 682 ,	 575 ,	 677 ,	 558 ,
+ 755 ,	 667 ,	 662 ,	 846 ,	 739 ,	 625 ,	 561 ,	 514 ,
+ 561 ,	 490 ,	 575 ,	 716 ,	 777 ,	 786 ,	 771 ,	 923 ,
+ 831 ,	 786 ,	 628 ,	 665 ,	 732 ,	 730 ,	 569 ,	 541 ,
+ 522 ,	 512 ,	 579 ,	 593 ,	 573 ,	 504 ,	 528 ,	 549 ,
+ 497 ,	 483 ,	 488 ,	 442 ,	 483 ,	 435 ,	 429 ,	 456 ,
+ 446 ,	 446 ,	 501 ,	 600 ,	 541 ,	 438 ,	 440 ,	 447 ,
+ 502 ,	 538 ,	 423 ,	 446 ,	 437 ,	 434 ,	 415 ,	 392 ,
+ 403 ,	 381 ,	 498 ,	 506 ,	 519 ,	 589 ,	 454 ,	 465 ,
+ 463 ,	 437 ,	 389 ,	 352 ,	 390 ,	 416 ,	 437 ,	 406 ,
+ 432 ,	 546 ,	 442 ,	 383 ,	 398 ,	 399 ,	 377 ,	 426 ,
+ 349 ,	 383 ,	 419 ,	 478 ,	 396 ,	 314 ,	 365 ,	 352 ,
+ 375 ,	 334 ,	 392 ,	 370 ,	 341 ,	 421 ,	 387 ,	 400 ,
+ 444 ,	 331 ,	 305 ,	 293 ,	 373 ,	 344 ,	 304 ,	 352 ,
+ 417 ,	 388 ,	 316 ,	 330 ,	 314 ,	 351 ,	 290 ,	 331 ,
+ 318 ,	 355 ,	 330 ,	 321 ,	 257 ,	 317 ,	 306 ,	 344 ,
+ 364 ,	 320 ,	 323 ,	 351 ,	 343 ,	 357 ,	 310 ,	 357 ,
+ 279 ,	 261 ,	 267 ,	 257 ,	 266 ,	 377 ,	 355 ,	 437 ,
+ 408 ,	 329 ,	 253 ,	 241 ,	 237 ,	 233 ,	 247 ,	 249 ,
+ 304 ,	 299 ,	 276 ,	 267 ,	 267 ,	 243 ,	 271 ,	 285 ,
+ 282 ,	 297 ,	 283 ,	 283 ,	 262 ,	 288 ,	 236 ,	 216 ,
+ 238 ,	 241 ,	 253 ,	 285 ,	 293 ,	 268 ,	 294 ,	 241 ,
+ 269 ,	 266 ,	 224 ,	 249 ,	 238 ,	 247 ,	 230 ,	 210 ,
+ 215 ,	 220 ,	 207 ,	 190 ,	 212 ,	 238 ,	 240 ,	 245 ,
+ 306 ,	 278 ,	 264 ,	 215 ,	 217 ,	 217 ,	 236 ,	 286 ,
+ 217 ,	 223 ,	 190 ,	 213 ,	 196 ,	 203 ,	 196 ,	 193 ,
+ 215 ,	 222 ,	 232 ,	 222 ,	 212 ,	 230 ,	 197 ,	 194 ,
+ 162 ,	 196 ,	 219 ,	 195 ,	 185 ,	 193 ,	 189 ,	 207 ,
+ 219 ,	 232 ,	 193 ,	 203 ,	 202 ,	 191 ,	 181 ,	 177 ,
+ 166 ,	 152 ,	 143 ,	 179 ,	 191 ,	 204 ,	 220 ,	 213 ,
+ 166 ,	 168 ,	 166 ,	 169 ,	 161 ,	 157 ,	 158 ,	 163 ,
+ 174 ,	 155 ,	 128 ,	 129 ,	 147 ,	 173 ,	 148 ,	 139 ,
+ 142 ,	 155 ,	 147 ,	 146 ,	 139 ,	 172 ,	 161 ,	 141 ,
+ 147 ,	 151 ,	 163 ,	 122 ,	 120 ,	 124 ,	 107 ,	 138 ,
+ 138 ,	 140 ,	 142 ,	 135 ,	 160 ,	 132 ,	 137 ,	 125 ,
+ 132 ,	 151 ,	 116 ,	 108 ,	 120 ,	 114 ,	 118 ,	 121 ,
+ 111 ,	 110 ,	 125 ,	 117 ,	 117 ,	 124 ,	 129 ,	 120 ,
+ 98 ,	 79 ,	 95 ,	 96 ,	 76 ,	 95 ,	 114 ,	 122 ,
+ 115 ,	 108 ,	 105 ,	 115 ,	 97 ,	 94 ,	 105 ,	 98 ,
+ 99 ,	 100 ,	 88 ,	 93 ,	 119 ,	 105 ,	 97 ,	 104 ,
+ 98 ,	 115 ,	 99 ,	 102 ,	 97 ,	 97 ,	 98 ,	 73 ,
+ 85 ,	 80 ,	 80 ,	 103 ,	 98 ,	 93 ,	 88 ,	 99 ,
+ 104 ,	 83 ,	 87 ,	 85 ,	 90 ,	 82 ,	 76 ,	 83 ,
+ 93 ,	 79 ,	 67 ,	 67 ,	 79 ,	 91 ,	 80 ,	 79 ,
+ 77 ,	 76 ,	 82 ,	 75 ,	 77 ,	 76 ,	 97 ,	 99 ,
+ 90 ,	 82 ,	 76 ,	 61 ,	 63 ,	 68 ,	 71 ,	 70 ,
+ 74 ,	 79 ,	 78 ,	 74 ,	 85 ,	 82 ,	 75 ,	 67 ,
+ 68 ,	 64 ,	 68 ,	 74 ,	 67 ,	 54 ,	 63 ,	 62 ,
+ 71 ,	 67 ,	 65 ,	 71 ,	 67 ,	 62 ,	 54 ,	 57 ,
+ 56 ,	 54 ,	 58 ,	 51 ,	 57 ,	 56 ,	 70 ,	 62 ,
+ 52 ,	 53 ,	 50 ,	 62 ,	 63 ,	 70 ,	 56 ,	 53 ,
+ 52 ,	 47 ,	 42 ,	 44 ,	 45 ,	 43 ,	 45 ,	 46 ,
+ 48 ,	 45 ,	 48 ,	 41 ,	 48 ,	 49 ,	 43 ,	 51 ,
+ 45 ,	 51 ,	 47 ,	 42 ,	 39 ,	 39 ,	 34 ,	 36 ,
+ 43 ,	 39 ,	 40 ,	 41 ,	 43 ,	 40 ,	 39 ,	 37 ,
+ 33 ,	 34 ,	 34 ,	 35 ,	 37 ,	 37 ,	 29 ,	 29 ,
+ 27 ,	 26 ,	 27 ,	 27 ,	 35 ,	 42 ,	 46 ,	 37 ,
+ 40 ,	 26 ,	 26 ,	 26 ,	 24 ,	 25 ,	 32 ,	 28 ,
+ 30 ,	 29 ,	 30 ,	 28 ,	 25 ,	 30 ,	 26 ,	 22 ,
+ 24 ,	 20 ,	 23 ,	 23 ,	 25 ,	 21 ,	 23 ,	 20 ,
+ 23 ,	 21 ,	 21 ,	 19 ,	 22 ,	 25 ,	 21 ,	 17 ,
+ 18 ,	 19 ,	 15 ,	 17 ,	 17 ,	 22 ,	 20 ,	 18 ,
+ 20 ,	 15 ,	 17 ,	 17 ,	 14 ,	 15 ,	 14 ,	 15 ,
+ 12 ,	 15 ,	 18 ,	 16 ,	 13 ,	 12 ,	 14 ,	 12 ,
+ 13 ,	 13 ,	 12 ,	 13 ,	 17 ,	 11 ,	 13 ,	 12 ,
+ 11 ,	 11 ,	 9 ,	 9 ,	 12 ,	 12 ,	 11 ,	 11 ,
+ 13 ,	 12 ,	 12 ,	 11 ,	 8 ,	 8 ,	 9 ,	 8 ,
+ 8 ,	 8 ,	 8 ,	 7 ,	 8 ,	 8 ,	 7 ,	 7 ,
+ 7 ,	 9 ,	 8 ,	 7 ,	 7 ,	 6 ,	 6 ,	 6 ,
+ 5 ,	 7 ,	 5 ,	 5 ,	 5 ,	 5 ,	 6 ,	 5 ,
+ 5 ,	 6 ,	 6 ,	 5 ,	 5 ,	 5 ,	 4 ,	 4 ,
+ 5 ,	 5 ,	 5 ,	 4 ,	 5 ,	 5 ,	 6 ,	 4 ,
+ 5 ,	 4 ,	 4 ,	 3 ,	 3 ,	 3 ,	 4 ,	 3 ,
+ 3 ,	 3 ,	 4 ,	 3 ,	 3 ,	 3 ,	 3 ,	 3 ,
+ 3 ,	 3 ,	 3 ,	 3 ,	 3 ,	 3 ,	 3 ,	 2 ,
+ 2 ,	 2 ,	 2 ,	 2 ,	 2 ,	 2 ,	 3 ,	 2 ,
+ 2 ,	 2 ,	 3 ,	 3 ,	 2 ,	 2 ,	 3 ,	 2 ,
+ 2 ,	 2 ,	 2 ,	 2 ,	 2 ,	 2 ,	 3 ,	 2 ,
+ 2 ,	 2 ,	 2 ,	 2 ,	 2 ,	 2 ,	 3 ,	 2 ,
+ 2 ,	 2 ,	 2 ,	 2 ,	 2 ,	 2 ,	 2 ,	 2 ,
+ 2 ,	 2 ,	 2 ,	 2 ,	 2 ,	 2 ,	 3 ,	 2 ,
+ 2 ,	 2 ,	 2 ,	 2 ,	 2 ,	 2 ,	 2 ,	 2 ,
+ 2 ,	 2 ,	 3 ,	 2 ,	 2 ,	 2 ,	 2 ,	 2 ,
+ 2 ,	 2 ,	 2 ,	 2 ,	 2 ,	 2 ,	 3 ,	 2 ,
+ 2 ,	 2 ,	 2 ,	 2 ,	 2 ,	 2 ,	 3 ,	 2 ,
+ 2 ,	 2 ,	 3 ,	 2 ,	 2 ,	 2 ,	 3 ,	 2 ,
+ 2 ,	 2 ,	 2 ,	 2 ,	 2 ,	 3 ,	 2 ,	 2 ,
+ 2 ,	 2 ,	 2 ,	 3 ,	 2 ,	 2 ,	 2 ,	 2 ,
+ 2 ,	 2 ,	 3 ,	 2 ,	 3 ,	 2 ,	 3 ,	 2 ,
+ 2 ,	 2 ,	 3 ,	 2 ,	 2 ,	 3 ,	 2 ,	 2 ,
+ 3 ,	 2 ,	 3 ,	 2 ,	 2 ,	 2 ,	 3 ,	 2 ,
+ 2 ,	 2 ,	 3 ,	 3 ,	 2 ,	 2 ,	 3 ,	 2 ,
+ 2 ,	 2 ,	 3 ,	 2 ,	 3 ,	 3 ,	 3 ,	 2 ,
+ 2 ,	 2 ,	 3 ,	 2 ,	 3 ,	 2 ,	 3 ,	 2 ,
+ 2 ,	 2 ,	 3 ,	 2 ,	 3 ,	 2 ,	 3 ,	 2 ,
+ 2 ,	 2 ,	 3 ,	 3 ,	 2 ,	 2 ,	 3 ,	 2 ,
+ 2 ,	 3 ,	 3 ,	 2 ,	 3 ,	 2 ,	 3 ,	 3 ,
+ 3 ,	 2 ,	 3 ,	 2 ,	 3 ,	 2 ,	 3 ,	 3 ,
+ 3 ,	 3 ,	 3 ,	 2 ,	 3 ,	 2 ,	 3 ,	 2 ,
+ 2 ,	 2 ,	 3 ,	 3 ,	 3 ,	 2 ,	 3 ,	 2 ,
+ 3 ,	 2 ,	 3 ,	 2 ,	 3 ,	 3 ,	 3 ,	 2 ,
+ 3 ,	 3 ,	 3 ,	 2 ,	 3 ,	 3 ,	 4 ,	 2 ,
+ 3 ,	 3 ,	 3 ,	 3 ,	 3 ,	 3 ,	 4 ,	 2 ,
+ 3 ,	 3 ,	 3 ,	 3 ,	 3 ,	 2 ,	 3 ,	 2 ,
+ 3 ,	 2 ,	 3 ,	 2 ,	 2 ,	 2 ,	 3 ,	 2 ,
+ 2 ,	 2 ,	 3 ,	 2 ,	 3 ,	 3 ,	 3 ,	 2 ,
+ 3 ,	 2 ,	 3 ,	 2 ,	 3 ,	 2 ,	 3 ,	 2 ,
+ 3 ,	 2 ,	 2 ,	 2 ,	 2 ,	 3 ,	 3 ,	 3 ,
+ 3 ,	 3 ,	 3 ,	 2 ,	 2 ,	 2 ,	 3 ,	 3 ,
+ 2 ,	 2 ,	 3 ,	 2 ,	 3 ,	 3 ,	 3 ,	 2 ,
+ 3 ,	 3 ,	 3 ,	 2 ,	 3 ,	 2 ,	 3 ,	 2 ,
+ 3 ,	 2 ,	 3 ,	 2 ,	 2 ,	 2 ,	 2 ,	 2 ,
+ 3 ,	 2 ,	 2 ,	 2 ,	 2 ,	 2 ,	 2 ,	 2 ,
+ 2 ,	 2 ,	 3 ,	 2 ,	 2 ,	 2 ,	 2 ,	 2 ,
+ 2 ,	 2 ,	 2 ,	 2 ,	 3 ,	 2 ,	 3 ,	 2 ,
+ 2 ,	 2 ,	 2 ,	 2 ,	 2 ,	 2 ,	 2 ,	 2 ,
+ 2 ,	 2 ,	 2 ,	 2 ,	 2 ,	 2 ,	 3 ,	 2 ,
+ 2 ,	 2 ,	 2 ,	 2 ,	 2 ,	 2 ,	 2 ,	 2 ,
+ 2 ,	 2 ,	 2 ,	 2 ,	 2 ,	 2 ,	 2 ,	 2 ,
+ 
+};
 
-uintptr_t llz_denoise_init(int type, int channel, int sample_rate)
+
+
+
+
+
+static int blackman_window(float *window)
+{
+	int i;
+	for (i = 0 ; i < WINDOW_LEN ; i++){
+		window[i] = (0.42 - 0.5*cos(2*PI*i/(WINDOW_LEN))  + 0.08*cos(4*PI*i/(WINDOW_LEN)));
+	}
+	return WINDOW_LEN;
+}
+
+static void spectrum_reduction_init(llz_denoise_t *f, float noise_gain, float fs)
+{
+	float f_deta;
+
+	blackman_window(f->window);
+
+    f->h_fft[0] = llz_fft_init2(FRAME_BUF, 1);
+    f->h_fft[1] = llz_fft_init2(FRAME_BUF, 1);
+
+	f->noise_gain = noise_gain;
+
+	memset(f->fft_work_buf, 0, 2*sizeof(float)*FRAME_BUF*2);
+
+	memset(f->mag,  0, 2*sizeof(float)*FFT_PROCESS_N);
+	memset(f->real, 0, 2*sizeof(float)*FFT_PROCESS_N);
+	memset(f->imag, 0, 2*sizeof(float)*FFT_PROCESS_N);
+
+	memset(f->cos_phi, 0, 2*sizeof(float)*FFT_PROCESS_N);
+	memset(f->sin_phi, 0, 2*sizeof(float)*FFT_PROCESS_N);
+	memset(f->cpu_overlap_buf, 0, 2*sizeof(float)*FRAME_BUF);
+
+	memset(f->mag_last, 0, 2*sizeof(float)*FFT_PROCESS_N);
+	memset(f->mag_avg,  0, 2*sizeof(float)*FFT_PROCESS_N);
+
+	f_deta = fs/(2*FFT_PROCESS_N);
+	f->strongfreq_index = 250/f_deta;
+
+}
+
+static void spectrum_reduction_uninit(llz_denoise_t *f)
+{
+	llz_fft_uninit(f->h_fft[0]);
+	llz_fft_uninit(f->h_fft[1]);
+}
+
+static void change_noisegain(llz_denoise_t *f, float noise_gain)
+{
+	f->noise_gain = noise_gain;
+}
+
+
+static void spectrum_reduction(llz_denoise_t *f, short *data_in, short *data_out, int chn)
+{
+	int i,j,k;
+
+	float *fft_work_buf;
+    float *fft_work;
+	
+	float *window;
+	float *mag;
+	float *real;
+	float *imag;
+	float *cos_phi;
+	float *sin_phi;
+	float *cpu_overlap_buf;
+	float gain;
+	float gain_tmp;
+	int   *mag_noise = mag_noise_tab1;
+
+	i = chn;
+	gain = f->noise_gain;
+
+    fft_work_buf = f->fft_work_buf[i];
+
+    window  = f->window;
+    mag     = f->mag[i];
+    real    = f->real[i];
+    imag    = f->imag[i];
+    cos_phi = f->cos_phi[i];
+    sin_phi = f->sin_phi[i];
+
+    cpu_overlap_buf = f->cpu_overlap_buf[i];
+
+    for(j = 0 ; j < FRAME_BUF ; j++){
+        fft_work_buf[j+j] = data_in[j] * window[j];
+        fft_work_buf[j+j+1] = 0;
+    }
+
+    llz_fft(f->h_fft[i], fft_work_buf);
+    fft_work = llz_fft_get_fft_work(f->h_fft[i]);
+
+    for (j = 0 ; j < FFT_PROCESS_N ; j++){
+        float  m_real,m_imag;
+
+
+        m_real =  fft_work[j+j];
+        m_imag =  fft_work[j+j+1];
+
+        real[j] = m_real;
+        imag[j] = m_imag;
+
+        mag[j] = sqrt(m_real*m_real+m_imag*m_imag);
+
+        cos_phi[j] = m_real/mag[j];
+        sin_phi[j] = m_imag/mag[j];
+
+        gain_tmp = 32*gain*mag_noise[j];
+
+        if (mag[j] >= gain_tmp)
+            mag[j] = mag[j] - gain_tmp;
+        else
+            mag[j] = 0;
+
+        m_real = mag[j] * cos_phi[j];
+        m_imag = mag[j] * sin_phi[j];
+
+        fft_work_buf[j+j] = m_real;
+        fft_work_buf[j+j+1] = m_imag;
+    }
+
+    for (j = 0 , k = FRAME_BUF_HALF - 1; j < FRAME_BUF_HALF - 1 ; j++,k--){
+        int  m_real,m_imag;
+
+        m_real = mag[k] * cos_phi[k];
+        m_imag = mag[k] * sin_phi[k]; 
+
+        fft_work_buf[FRAME_BUF+2+j+j]	= m_real;
+        fft_work_buf[FRAME_BUF+2+j+j+1] = -m_imag;
+    }
+
+    //			ifft(fft_work_buf_int,st);
+    llz_ifft_f(f->h_fft[i], fft_work_buf);
+
+    for (j = 0 ; j < FRAME_BUF ; j++){
+        cpu_overlap_buf[j] += fft_work[j+j] * window[j];
+    }
+
+    for (j = 0 ; j < HOP ; j++){
+        data_out[j] = cpu_overlap_buf[j];
+    }
+
+    memmove(cpu_overlap_buf, cpu_overlap_buf+HOP, sizeof(float)*OVERLAP);
+    memset(cpu_overlap_buf+OVERLAP, 0, sizeof(float)*HOP);
+
+}
+
+
+
+
+
+uintptr_t llz_denoise_init(int type, int channel, int sample_rate, float noise_gain)
 {
     llz_denoise_t *f = NULL;
 
@@ -96,6 +408,8 @@ uintptr_t llz_denoise_init(int type, int channel, int sample_rate)
     f->h_lms[0] = llz_lms_init(1);
     f->h_lms[1] = llz_lms_init(1);
 
+    //spectrum reduction init
+    spectrum_reduction_init(f, noise_gain, sample_rate);
 
     if (type == DENOISE_RNN) {
         if (sample_rate != 48000 &&
@@ -151,6 +465,7 @@ void llz_denoise_uninit(uintptr_t handle)
         llz_lms_uninit(f->h_lms[0]);
         llz_lms_uninit(f->h_lms[1]);
 
+        spectrum_reduction_uninit(f);
 
         free(f);
         f = NULL;
@@ -278,26 +593,24 @@ static int do_spectrum_denoise(llz_denoise_t *f, unsigned char *inbuf, int in_by
 
 		if (f->type == DENOISE_LMS) {
 			llz_lms(f->h_lms[i], data_in, data_out, HOP); 
-            /*printf("-------yyyyyyyyyyyy: %d, %d\n", data_in[0], data_out[0]);*/
 		}
 
 		
-#if 0
 		if ((f->type == DENOISE_FFT_LMS) || (f->type == DENOISE_FFT_LMS_LPF)) {
-			SpectrumReduction(&nr->srd,data_in,data_out,i);
+			spectrum_reduction(f, data_in, data_out, i);
 
 			data_out = (short *)f->data_out[i];
 
 			for(j = 0 ; j < HOP ; j++) 
 				data_tmp_in[j] = data_out[j];				
 
-			LMS_FLT(&nr->lmsfilter[i],data_tmp_in,data_tmp_out,HOP); 
+			llz_lms(f->h_lms[i], data_tmp_in, data_tmp_out, HOP); 
 
 			for(j = 0 ; j < HOP ; j++) 
 				data_out[j] = data_tmp_out[j];
-
 		}
 
+#if 0
 		if(f->type == DENOISE_FFT_LMS_LPF) {
 			data_out = f->data_out[i];
 
@@ -325,9 +638,9 @@ static int do_spectrum_denoise(llz_denoise_t *f, unsigned char *inbuf, int in_by
 		if((f->type == DENOISE_LEARN1) || (f->type == DENOISE_LEARN2)) {
 		
 			if(f->type == DENOISE_LEARN1)
-				SpectrumReductionWithLearn(&nr->srd,data_in,data_out,i,nr->noise_learn[i]);
+				SpectrumReductionWithLearn(&nr->f,data_in,data_out,i,nr->noise_learn[i]);
 			if(nr->nr_mode == 5)
-				SpectrumReductionWithLearn(&nr->srd,data_in,data_out,i,nr->noise_learn[i]);
+				SpectrumReductionWithLearn(&nr->f,data_in,data_out,i,nr->noise_learn[i]);
 
 			data_out = (short *)nr->data_out[i];
 		

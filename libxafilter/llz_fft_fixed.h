@@ -75,6 +75,8 @@ void llz_fft_fixed_uninit(uintptr_t handle);
 void llz_fft_fixed(uintptr_t handle, int *data);
 void llz_ifft_fixed(uintptr_t handle, int* data);
 
+int * llz_fft_fixed_get_fft_work(uintptr_t handle);
+
 #ifdef __cplusplus 
 }
 #endif  

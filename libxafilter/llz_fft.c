@@ -27,6 +27,8 @@ typedef struct  _llz_fft_ctx_t {
     float *fft_work;
     float *cos_ang;
     float *sin_ang;
+
+    int   use_fft_work;
 }llz_fft_ctx_t;
 
 
@@ -130,6 +132,37 @@ static void inverse_dit_butterfly(float *data, long size, float *cos_ang, float 
 }
 
 
+static void inverse_dif_butterfly(float *data, long size, float *cos_ang, float *sin_ang)
+{
+
+	long angle,astep,dl;
+	float xr,yr,xi,yi,wr,wi,dr,di;
+	float *l1, *l2, *end, *ol2;
+	
+    astep = 1;
+    end   = data + size + size;
+    for (dl = size; dl > 1; dl >>= 1, astep += astep) {
+        l1 = data;
+        l2 = data + dl;
+        for (; l2 < end; l1 = l2, l2 = l2 + dl) {
+            ol2 = l2;
+            for (angle = 0; l1 < ol2; l1 += 2, l2 += 2) {
+                wr = cos_ang[angle];
+                wi = sin_ang[angle];
+                xr = *l1 + *l2;
+                xi = *(l1+1) + *(l2+1);
+                dr = *l1 - *l2;
+                di = *(l1+1) - *(l2+1);
+                yr = dr*wr - di*wi;
+                yi = dr*wi + di*wr;
+                *(l1) = xr; *(l1+1) = xi;
+                *(l2) = yr; *(l2+1) = yi;
+                angle += astep;
+            }
+        }
+    }
+}
+
 
 /*
     in-place Radix-2 FFT for complex values
@@ -157,9 +190,11 @@ void llz_fft(uintptr_t handle, float *data)
         temp[i+i] = data[bit+bit]; temp[i+i+1] = data[bit+bit+1];
     }
 
-    for (i = 0; i < size ; i++) {
-        data[i+i] = temp[i+i];
-        data[i+i+1] = temp[i+i+1];
+    if (f->use_fft_work == 0) {
+        for (i = 0; i < size ; i++) {
+            data[i+i] = temp[i+i];
+            data[i+i+1] = temp[i+i+1];
+        }
     }
 
 }
@@ -198,6 +233,36 @@ void llz_ifft(uintptr_t handle, float* data)
 }
 
 
+void llz_ifft_f(uintptr_t handle, float *data)
+{
+	int i,bit;
+    llz_fft_ctx_t *f = (llz_fft_ctx_t *)handle;
+	float *temp    = f->fft_work;
+	int   size     = f->length;
+	int   *bit_rvs = f->bit_rvs;
+
+	int base = f->base;
+	float *cos_ang = f->cos_ang;
+	float *sin_ang = f->sin_ang;
+
+	inverse_dif_butterfly(data, size, cos_ang, sin_ang);
+	
+	for(i = 0 ; i < size ; i++){
+		bit = bit_rvs[i];
+		temp[i+i] = data[bit+bit]/size;
+		temp[i+i+1] = data[bit+bit+1]/size;
+	}
+
+
+    if (f->use_fft_work == 0) {
+        for (i = 0; i < size ; i++){
+            data[i+i] = temp[i+i];
+            data[i+i+1] = temp[i+i+1];
+        }
+    }
+
+}
+
 
 uintptr_t llz_fft_init(int size)
 {
@@ -227,8 +292,49 @@ uintptr_t llz_fft_init(int size)
         f->sin_ang[i] = (float)sin(ang);
     }
 
+    f->use_fft_work = 0;
+
     return (uintptr_t)f;
 }
+
+
+
+uintptr_t llz_fft_init2(int size, int use_fft_work)
+{
+    int i;
+    float ang;
+    llz_fft_ctx_t *f = NULL;
+
+    f = (llz_fft_ctx_t *)malloc(sizeof(llz_fft_ctx_t));
+    memset(f, 0, sizeof(llz_fft_ctx_t));
+
+    f->length = size;
+    f->base   = (int)(log(size)/log(2));
+
+    if ((1<<f->base) < size)
+        f->base += 1;
+
+    f->bit_rvs  = (int *)malloc(sizeof(int)*size);
+    f->fft_work = (float *)malloc(sizeof(float)*size*2);
+    f->cos_ang  = (float *)malloc(sizeof(float)*size);
+    f->sin_ang  = (float *)malloc(sizeof(float)*size);
+
+    bit_reverse(f->bit_rvs,size);
+
+    for (i = 0 ; i < size ; i++){
+        ang = (float)(2*M_PI*i)/size;
+        f->cos_ang[i] = (float)cos(ang);
+        f->sin_ang[i] = (float)sin(ang);
+    }
+
+    f->use_fft_work = use_fft_work;
+
+    return (uintptr_t)f;
+}
+
+
+
+
 
 void llz_fft_uninit(uintptr_t handle)
 {
@@ -246,6 +352,14 @@ void llz_fft_uninit(uintptr_t handle)
 
     free(f);
     f = NULL;
+}
+
+
+float * llz_fft_get_fft_work(uintptr_t handle)
+{
+    llz_fft_ctx_t *f = (llz_fft_ctx_t *)handle;
+
+    return f->fft_work;
 }
 
 

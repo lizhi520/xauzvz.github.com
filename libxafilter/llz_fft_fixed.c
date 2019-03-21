@@ -268,5 +268,11 @@ void llz_fft_fixed_uninit(uintptr_t handle)
     f = NULL;
 }
 
+int * llz_fft_fixed_get_fft_work(uintptr_t handle)
+{
+    llz_fft_fixed_ctx_t *f = (llz_fft_fixed_ctx_t *)handle;
+
+    return f->fft_work;
+}
 
 

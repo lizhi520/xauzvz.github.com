@@ -21,9 +21,14 @@ extern "C"
 
 uintptr_t llz_fft_init(int size);
 void llz_fft_uninit(uintptr_t handle);
+uintptr_t llz_fft_init2(int size, int use_fft_work);
 
 void llz_fft(uintptr_t handle, float *data);
 void llz_ifft(uintptr_t handle, float* data);
+void llz_ifft_f(uintptr_t handle, float* data);
+
+float * llz_fft_get_fft_work(uintptr_t handle);
+
 
 #ifdef __cplusplus 
 }
