@@ -18,7 +18,7 @@ enum{
     DENOISE_LEARN2 = 5,
 };
 
-uintptr_t llz_denoise_init(int type, int channel, int sample_rate, float noise_gain);
+uintptr_t llz_denoise_init(int type, int channel, int sample_rate, float noise_gain, float lpf_fc);
 void llz_denoise_uninit(uintptr_t handle);
 int llz_denoise_framelen_bytes(uintptr_t handle);
 int llz_denoise(uintptr_t handle, unsigned char *inbuf, int inlen, unsigned char * outbuf, int *outlen);

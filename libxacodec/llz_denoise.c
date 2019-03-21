@@ -19,6 +19,7 @@
 #include "libxafilter/llz_mixer.h"
 #include "libxafilter/llz_lms.h"
 #include "libxafilter/llz_fft.h"
+#include "libxafilter/llz_fir.h"
 #include "llz_denoise.h"
 #include "libxaext/librnnoise/rnnoise.h"
 
@@ -90,6 +91,9 @@ typedef struct _llz_denoise_t {
 	float noise_gain;
 	int   strongfreq_index;
 
+    //lpf filter
+    uintptr_t h_lpf[2];
+    float lpf_fc;  // 0.25~0.5
 
 } llz_denoise_t;
 
@@ -324,7 +328,6 @@ static void spectrum_reduction(llz_denoise_t *f, short *data_in, short *data_out
     for (j = 0 ; j < FFT_PROCESS_N ; j++){
         float  m_real,m_imag;
 
-
         m_real =  fft_work[j+j];
         m_imag =  fft_work[j+j+1];
 
@@ -360,7 +363,6 @@ static void spectrum_reduction(llz_denoise_t *f, short *data_in, short *data_out
         fft_work_buf[FRAME_BUF+2+j+j+1] = -m_imag;
     }
 
-    //			ifft(fft_work_buf_int,st);
     llz_ifft_f(f->h_fft[i], fft_work_buf);
 
     for (j = 0 ; j < FRAME_BUF ; j++){
@@ -380,7 +382,7 @@ static void spectrum_reduction(llz_denoise_t *f, short *data_in, short *data_out
 
 
 
-uintptr_t llz_denoise_init(int type, int channel, int sample_rate, float noise_gain)
+uintptr_t llz_denoise_init(int type, int channel, int sample_rate, float noise_gain, float lpf_fc)
 {
     llz_denoise_t *f = NULL;
 
@@ -410,6 +412,17 @@ uintptr_t llz_denoise_init(int type, int channel, int sample_rate, float noise_g
 
     //spectrum reduction init
     spectrum_reduction_init(f, noise_gain, sample_rate);
+
+    //lpf fir init
+    if (lpf_fc > 1)
+        lpf_fc = 1;
+    if (lpf_fc < 0.25)
+        lpf_fc = 0.25;
+
+    f->h_lpf[0] = llz_fir_filter_lpf_init(HOP, 31, 0.5*lpf_fc, BLACKMAN);
+    f->h_lpf[1] = llz_fir_filter_lpf_init(HOP, 31, 0.5*lpf_fc, BLACKMAN);
+    f->lpf_fc = lpf_fc;
+
 
     if (type == DENOISE_RNN) {
         if (sample_rate != 48000 &&
@@ -466,6 +479,9 @@ void llz_denoise_uninit(uintptr_t handle)
         llz_lms_uninit(f->h_lms[1]);
 
         spectrum_reduction_uninit(f);
+
+        llz_fir_filter_uninit(f->h_lpf[0]);
+        llz_fir_filter_uninit(f->h_lpf[1]);
 
         free(f);
         f = NULL;
@@ -610,7 +626,6 @@ static int do_spectrum_denoise(llz_denoise_t *f, unsigned char *inbuf, int in_by
 				data_out[j] = data_tmp_out[j];
 		}
 
-#if 0
 		if(f->type == DENOISE_FFT_LMS_LPF) {
 			data_out = f->data_out[i];
 
@@ -619,7 +634,7 @@ static int do_spectrum_denoise(llz_denoise_t *f, unsigned char *inbuf, int in_by
 				buf_tmp_out[j] = 0;
 			}
 					
-			FIR(buf_tmp_in,buf_tmp_out,HOP,&nr->lpf[i]);
+            llz_fir_filter(f->h_lpf[i], buf_tmp_in, buf_tmp_out, HOP);
 			
 			for(j = 0 ; j < HOP ; j++) {
 				float temp;
@@ -634,6 +649,7 @@ static int do_spectrum_denoise(llz_denoise_t *f, unsigned char *inbuf, int in_by
 			}
 		}
 
+#if 0
 
 		if((f->type == DENOISE_LEARN1) || (f->type == DENOISE_LEARN2)) {
 		

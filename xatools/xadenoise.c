@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
     samplerate_in = fmt.samplerate;
     fseek(sourcefile,44,0);
 
-    h_denoise = llz_denoise_init(opt_type, fmt.channels, fmt.samplerate, 3);
+    h_denoise = llz_denoise_init(opt_type, fmt.channels, fmt.samplerate, 1, 0.6);
 
     fmt1.format = 0x0001;
     fmt1.channels = fmt.channels;
