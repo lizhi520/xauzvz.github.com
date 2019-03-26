@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 int llz_mixer_pass(unsigned char *sample_in, int bytes_len, unsigned char *sample_out) {
     memcpy(sample_out, sample_in, bytes_len); 

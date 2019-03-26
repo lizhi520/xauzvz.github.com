@@ -8,6 +8,7 @@ extern "C"
 { 
 #endif  
 
+#include <stdint.h>
 
 enum{
     DENOISE_RNN = 0,
