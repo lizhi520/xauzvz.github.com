@@ -1,12 +1,12 @@
-var __xaudioprojs_utf8ToStr;
+var __ffmpegjs_utf8ToStr;
 
-function __xaudioprojs(__xaudioprojs_opts) {
-  __xaudioprojs_utf8ToStr = UTF8ArrayToString;
-  __xaudioprojs_opts = __xaudioprojs_opts || {};
-  var __xaudioprojs_return;
+function __ffmpegjs(__ffmpegjs_opts) {
+  __ffmpegjs_utf8ToStr = UTF8ArrayToString;
+  __ffmpegjs_opts = __ffmpegjs_opts || {};
+  var __ffmpegjs_return;
   var Module = {};
 
-  function __xaudioprojs_toU8(data) {
+  function __ffmpegjs_toU8(data) {
     if (Array.isArray(data) || data instanceof ArrayBuffer) {
       data = new Uint8Array(data);
     } else if (!data) {
@@ -19,9 +19,9 @@ function __xaudioprojs(__xaudioprojs_opts) {
     return data;
   }
 
-  Object.keys(__xaudioprojs_opts).forEach(function(key) {
+  Object.keys(__ffmpegjs_opts).forEach(function(key) {
     if (key != "mounts" && key != "MEMFS") {
-      Module[key] = __xaudioprojs_opts[key];
+      Module[key] = __ffmpegjs_opts[key];
     }
   });
 
@@ -43,7 +43,7 @@ function __xaudioprojs(__xaudioprojs_opts) {
   };
 
   Module["preRun"] = function() {
-    (__xaudioprojs_opts["mounts"] || []).forEach(function(mount) {
+    (__ffmpegjs_opts["mounts"] || []).forEach(function(mount) {
       var fs = FS.filesystems[mount["type"]];
       if (!fs) {
         throw new Error("Bad mount type");
@@ -67,13 +67,15 @@ function __xaudioprojs(__xaudioprojs_opts) {
     FS.mkdir("/work");
     FS.chdir("/work");
 
-    (__xaudioprojs_opts["MEMFS"] || []).forEach(function(file) {
+    (__ffmpegjs_opts["MEMFS"] || []).forEach(function(file) {
       if (file["name"].match(/\//)) {
         throw new Error("Bad file name");
       }
       var fd = FS.open(file["name"], "w+");
-      var data = __xaudioprojs_toU8(file["data"]);
+      var data = __ffmpegjs_toU8(file["data"]);
+      console.log("1111111111111");
       FS.write(fd, data, 0, data.length);
+      console.log("222222222222");
       FS.close(fd);
     });
   };
@@ -97,14 +99,14 @@ function __xaudioprojs(__xaudioprojs_opts) {
     }
 
     var inFiles = Object.create(null);
-    (__xaudioprojs_opts["MEMFS"] || []).forEach(function(file) {
+    (__ffmpegjs_opts["MEMFS"] || []).forEach(function(file) {
       inFiles[file.name] = null;
     });
     var outFiles = listFiles("/work").filter(function(file) {
       return !(file.name in inFiles);
     }).map(function(file) {
-      var data = __xaudioprojs_toU8(file.contents);
+      var data = __ffmpegjs_toU8(file.contents);
       return {"name": file.name, "data": data};
     });
-    __xaudioprojs_return = {"MEMFS": outFiles};
+    __ffmpegjs_return = {"MEMFS": outFiles};
   };

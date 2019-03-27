@@ -1,9 +1,9 @@
-  return __xaudioprojs_return;
+  return __ffmpegjs_return;
 }
 
 
 if (typeof module !== 'undefined') {
-  module.exports = __xaudioprojs;
+  module.exports = __ffmpegjs;
 }
 
 
