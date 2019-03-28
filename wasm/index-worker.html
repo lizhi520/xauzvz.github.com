@@ -1,0 +1,56 @@
+<script src="./downFile.js"></script>
+<input type='file' onchange='openFile(event)'>
+<script> 
+  var stdout = "";
+  var stderr = "";
+  var worker = new Worker("xaudiopro-worker.js");
+  worker.onmessage = function(e) {
+    var msg = e.data;
+    switch (msg.type) {
+      case "ready":
+        console.log("=======================> is ready");
+                break;
+      case "stdout":
+        console.log("stdout: ", msg.data);
+        stdout += msg.data + "\n";
+        break;
+      case "stderr":
+        console.log("stderr", msg.data);
+        stderr += msg.data + "\n";
+        break;
+      case "exit":
+        console.log("Process exited with code " + msg.data);
+        console.log(stdout);
+        worker.terminate();
+        break;
+      case "done":
+        console.log("44444444444444: ", msg.data);
+        downFile(msg.data, "hiss-one-wasm.wav");
+        break;
+    }
+  };
+</script>
+
+<script>
+  var openFile = function(event) {
+    var input = event.target;
+
+    var reader = new FileReader();
+    reader.onload = function(){
+      var arrayBuffer = reader.result;
+
+      console.log(arrayBuffer.byteLength);
+
+      worker.postMessage({
+        type: "run", 
+        MEMFS: [{name: "hiss-one.wav", data: arrayBuffer}],
+        arguments: ["-i", "hiss-one.wav", "-o", "hiss-one-wasm.wav"],
+      });
+
+    };
+    reader.readAsArrayBuffer(input.files[0]);
+
+  };
+</script>
+
+
