@@ -20,17 +20,18 @@ xaudiopro:
 
 #EMCC_COMMON_ARGS = \
 	#--closure 1 \
-	#-s TOTAL_MEMORY=134217728 \
 	#-O3 \
+	#-s TOTAL_MEMORY=134217728 \
 	#-s WASM=0 \
+	#-s FORCE_FILESYSTEM=1 \
 	#-o $@
 
 EMCC_COMMON_ARGS = \
-	--closure 1 \
+	-Os \
 	-s WASM=0 \
+	-s TOTAL_MEMORY=134217728 \
 	-s FORCE_FILESYSTEM=1 \
 	-o $@
-
 
 SHARED_DEPS = \
 	build/dist/lib/libxacodec.so \
@@ -43,14 +44,4 @@ xaudiopro.js: xaudiopro
 		--pre-js pre.js \
 		--post-js post.js \
 		$(EMCC_COMMON_ARGS)
-
-#xaudiopro.js: xaudiopro
-	#emcc build/xadenoise.bc $(SHARED_DEPS) \
-		#--pre-js pre.js \
-		#--post-js post.js \
-		#$(EMCC_COMMON_ARGS)
-
-#xaudiopro.js: xaudiopro
-	#emcc build/xadenoise.bc $(SHARED_DEPS) \
-		#$(EMCC_COMMON_ARGS)
 
