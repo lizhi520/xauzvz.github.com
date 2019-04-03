@@ -1,7 +1,7 @@
 
 WORK_PATH := $(shell pwd)
 
-all: xaudiopro.js xaudiopro-worker.js
+all: xaudiopro.js xaudiopro.worker.js
 
 clean: 
 	rm -rf build
@@ -9,6 +9,8 @@ clean:
 	rm xaudiopro.js.mem
 	rm xaudiopro-worker.js
 	rm xaudiopro-worker.js.mem
+	rm xaudiopro.worker.js
+	rm xaudiopro.worker.js.mem
 
 xaudiopro: 
 	cd ../ && \
@@ -48,7 +50,7 @@ xaudiopro.js: xaudiopro
 		--post-js post.js \
 		$(EMCC_COMMON_ARGS)
 
-xaudiopro-worker.js: xaudiopro 
+xaudiopro.worker.js: xaudiopro 
 	emcc build/xadenoise.bc $(SHARED_DEPS) \
 		--pre-js pre-worker.js \
 		--post-js post-worker.js \
