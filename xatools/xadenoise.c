@@ -287,8 +287,6 @@ int main(int argc, char *argv[])
     int read_len         = 0;
     int write_total_size = 0;
 
-    int total_frame_num = 0;
-
     uintptr_t h_denoise;
 
 	short wavsamples_in[2*LLZ_RS_FRAMELEN_RNN_MAX]={0};
@@ -301,16 +299,16 @@ int main(int argc, char *argv[])
     if(ret) return -1;
 
     if ((destfile = fopen(opt_outputfile, "w+b")) == NULL) {
-		printf("error##file:output file can not be opened\n");
+		LLZ_PRINT("error##file:output file can not be opened\n");
 		return 0; 
 	}                         
 
 	if ((sourcefile = fopen(opt_inputfile, "rb")) == NULL) {
-		printf("error##file:input file can not be opened;\n");
+		LLZ_PRINT("error##file:input file can not be opened;\n");
 		return 0; 
     }
 
-    printf("info##begin");
+    LLZ_PRINT("INFO: begin");
     fmt = llz_wavfmt_readheader(sourcefile);
     /*printf("format: %d\n", fmt.format);*/
     /*printf("info##chn: %d\n", fmt.channels);*/
@@ -330,11 +328,9 @@ int main(int argc, char *argv[])
     llz_wavfmt_writeheader(fmt1, destfile);
 
     in_len_bytes = llz_denoise_framelen_bytes(h_denoise);
-    total_frame_num = (int)(fmt.data_size/in_len_bytes)+1;
 
-    printf("info##file_size=%d\n", fmt.data_size);
-    printf("info##frame_len=%d\n", in_len_bytes);
-    printf("info##total_frame_num=%d\n", total_frame_num);
+    LLZ_PRINT("INFO: file_size=%d\n", fmt.data_size);
+    LLZ_PRINT("INFO: frame_len=%d\n", in_len_bytes);
 
     while(1) {
         if(is_last)
@@ -351,8 +347,7 @@ int main(int argc, char *argv[])
         /*printf("--------> %d, %d, %d, %d\n", ((short *)p_wavin)[16], ((short *)p_wavout)[16], ((short *)p_wavin)[0], ((short *)p_wavout)[0]);*/
 
         frame_index++;
-        printf("info##frame_index=%d\n", frame_index);
-        printf("info##progress=%d\n", (frame_index*100/total_frame_num));
+        LLZ_PRINT("INFO: frame_index=%d\n", frame_index);
 
         if (out_len_bytes == 0)
             continue;
@@ -392,6 +387,7 @@ int main(int argc, char *argv[])
             }
         }
 
+        LLZ_PRINT("INFO: progress=%d\n", (int)(write_total_size*100/fmt.data_size));
     }
 
     fmt1.data_size = write_total_size / fmt1.block_align;
@@ -406,7 +402,7 @@ int main(int argc, char *argv[])
     fclose(sourcefile);
     fclose(destfile);
 
-    printf("info##end");
+    LLZ_PRINT("info##end");
 
     return 0;
 }
