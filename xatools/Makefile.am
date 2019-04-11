@@ -1,6 +1,6 @@
 #noinst_PROGRAMS=test
-#bin_PROGRAMS=xaresample xapcm2wav xadenoise
-bin_PROGRAMS=xaresample.bc xapcm2wav.bc xadenoise.bc
+bin_PROGRAMS=xaresample xapcm2wav xadenoise
+#bin_PROGRAMS=xaresample.bc xapcm2wav.bc xadenoise.bc
 
 test_SOURCES=test.c test_opt.c
 test_INCLUDES=test_opt.h

@@ -730,6 +730,30 @@ int llz_denoise(uintptr_t handle, unsigned char *inbuf, int inlen, unsigned char
             *outlen = do_spectrum_denoise(f, inbuf, inlen, outbuf);
     }
 
+    return 0;
+}
+
+int llz_denoise_flush_spectrum(uintptr_t handle, int inlen, unsigned char *outbuf, int *outlen)
+{
+    llz_denoise_t *f = (llz_denoise_t *)handle;
+
+    unsigned char *tmpbuf;
+    int out_size = 0;
+    int frame_len;
+
+    frame_len = f->channel * HOP * 2;
+
+    tmpbuf = (unsigned char *)malloc(frame_len);
+    memset(tmpbuf, 0, frame_len);
+
+    out_size  = frame_len;
+    out_size += do_spectrum_denoise(f, tmpbuf, frame_len, outbuf+out_size);
+    out_size += do_spectrum_denoise(f, tmpbuf, frame_len, outbuf+out_size);
+    out_size += do_spectrum_denoise(f, tmpbuf, frame_len, outbuf+out_size);
+
+    *outlen = out_size - (frame_len - inlen);
+
+    free(tmpbuf);
 
     return 0;
 }

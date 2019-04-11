@@ -329,6 +329,7 @@ int main(int argc, char *argv[])
 
     in_len_bytes = llz_denoise_framelen_bytes(h_denoise);
 
+    LLZ_PRINT("INFO: denoise mode=%d\n", opt_type);
     LLZ_PRINT("INFO: file_size=%d\n", fmt.data_size);
     LLZ_PRINT("INFO: frame_len=%d\n", in_len_bytes);
 
@@ -362,24 +363,30 @@ int main(int argc, char *argv[])
             write_total_size += out_len_bytes-offset;
         } else {
             if (is_last) {
-                int offset;
-                int diff;
+                if (opt_type == DENOISE_RNN) {
+                    int offset;
+                    int diff;
 
-                offset = llz_denoise_delay_offset(h_denoise);
-                diff = out_len_bytes - read_len;
+                    offset = llz_denoise_delay_offset(h_denoise);
+                    diff = out_len_bytes - read_len;
 
-                fwrite(p_wavout, 1, read_len, destfile);
-                if (diff > offset) {
-                    fwrite(p_wavout+read_len, 1, offset, destfile);
-                    write_total_size += read_len+offset;
+                    fwrite(p_wavout, 1, read_len, destfile);
+                    if (diff > offset) {
+                        fwrite(p_wavout+read_len, 1, offset, destfile);
+                        write_total_size += read_len+offset;
+                    } else {
+                        fwrite(p_wavout+read_len, 1, diff, destfile);
+                        write_total_size += read_len+diff;
+
+                        memset(p_wavin, 0, in_len_bytes);
+                        llz_denoise(h_denoise, p_wavin, in_len_bytes, p_wavout, &out_len_bytes);
+                        fwrite(p_wavout, 1, (offset-diff), destfile);
+                        write_total_size += (offset-diff);
+                    }
                 } else {
-                    fwrite(p_wavout+read_len, 1, diff, destfile);
-                    write_total_size += read_len+diff;
-
-                    memset(p_wavin, 0, in_len_bytes);
-                    llz_denoise(h_denoise, p_wavin, in_len_bytes, p_wavout, &out_len_bytes);
-                    fwrite(p_wavout, 1, (offset-diff), destfile);
-                    write_total_size += (offset-diff);
+                    llz_denoise_flush_spectrum(h_denoise, read_len, p_wavout, &out_len_bytes);
+                    fwrite(p_wavout, 1, out_len_bytes, destfile);
+                    write_total_size += out_len_bytes;
                 }
             } else {
                 fwrite(p_wavout, 1, out_len_bytes, destfile);
@@ -387,7 +394,8 @@ int main(int argc, char *argv[])
             }
         }
 
-        LLZ_PRINT("INFO: progress=%d\n", (int)(write_total_size*100/fmt.data_size));
+        LLZ_PRINT("INFO: current_size=%d\n", write_total_size);
+        LLZ_PRINT("INFO: progress=%d\n", (int)(write_total_size*100/(2*fmt.data_size)));
     }
 
     fmt1.data_size = write_total_size / fmt1.block_align;

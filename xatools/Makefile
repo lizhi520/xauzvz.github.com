@@ -87,9 +87,9 @@ NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = x86_64-apple-darwin16.4.0
-host_triplet = x86-none-linux-gnu
-bin_PROGRAMS = xaresample.bc$(EXEEXT) xapcm2wav.bc$(EXEEXT) \
-	xadenoise.bc$(EXEEXT)
+host_triplet = x86_64-apple-darwin16.4.0
+bin_PROGRAMS = xaresample$(EXEEXT) xapcm2wav$(EXEEXT) \
+	xadenoise$(EXEEXT)
 subdir = xatools
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -102,19 +102,26 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-xadenoise_bc_SOURCES = xadenoise.c
-xadenoise_bc_OBJECTS = xadenoise.$(OBJEXT)
-xadenoise_bc_LDADD = $(LDADD)
+am_xadenoise_OBJECTS = xadenoise.$(OBJEXT)
+xadenoise_OBJECTS = $(am_xadenoise_OBJECTS)
+xadenoise_DEPENDENCIES = $(top_srcdir)/libxautil/libxautil.la \
+	$(top_srcdir)/libxafilter/libxafilter.la \
+	$(top_srcdir)/libxacodec/libxacodec.la \
+	$(top_srcdir)/libxaext/librnnoise/librnnoise.la
 AM_V_lt = $(am__v_lt_$(V))
 am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-xapcm2wav_bc_SOURCES = xapcm2wav.c
-xapcm2wav_bc_OBJECTS = xapcm2wav.$(OBJEXT)
-xapcm2wav_bc_LDADD = $(LDADD)
-xaresample_bc_SOURCES = xaresample.c
-xaresample_bc_OBJECTS = xaresample.$(OBJEXT)
-xaresample_bc_LDADD = $(LDADD)
+am_xapcm2wav_OBJECTS = xapcm2wav.$(OBJEXT) xapcm2wav_opt.$(OBJEXT)
+xapcm2wav_OBJECTS = $(am_xapcm2wav_OBJECTS)
+xapcm2wav_DEPENDENCIES = $(top_srcdir)/libxautil/libxautil.la \
+	$(top_srcdir)/libxafilter/libxafilter.la \
+	$(top_srcdir)/libxacodec/libxacodec.la
+am_xaresample_OBJECTS = xaresample.$(OBJEXT) xaresample_opt.$(OBJEXT)
+xaresample_OBJECTS = $(am_xaresample_OBJECTS)
+xaresample_DEPENDENCIES = $(top_srcdir)/libxautil/libxautil.la \
+	$(top_srcdir)/libxafilter/libxafilter.la \
+	$(top_srcdir)/libxacodec/libxacodec.la
 AM_V_P = $(am__v_P_$(V))
 am__v_P_ = $(am__v_P_$(AM_DEFAULT_VERBOSITY))
 am__v_P_0 = false
@@ -131,7 +138,8 @@ DEFAULT_INCLUDES = -I. -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = ./$(DEPDIR)/xadenoise.Po \
-	./$(DEPDIR)/xapcm2wav.Po ./$(DEPDIR)/xaresample.Po
+	./$(DEPDIR)/xapcm2wav.Po ./$(DEPDIR)/xapcm2wav_opt.Po \
+	./$(DEPDIR)/xaresample.Po ./$(DEPDIR)/xaresample_opt.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -151,8 +159,10 @@ AM_V_CCLD = $(am__v_CCLD_$(V))
 am__v_CCLD_ = $(am__v_CCLD_$(AM_DEFAULT_VERBOSITY))
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = xadenoise.c xapcm2wav.c xaresample.c
-DIST_SOURCES = xadenoise.c xapcm2wav.c xaresample.c
+SOURCES = $(xadenoise_SOURCES) $(xapcm2wav_SOURCES) \
+	$(xaresample_SOURCES)
+DIST_SOURCES = $(xadenoise_SOURCES) $(xapcm2wav_SOURCES) \
+	$(xaresample_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -182,21 +192,21 @@ DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = ${SHELL} /Users/luolongzhi/Project/mygithub/xaudiopro/missing aclocal-1.16
 AMTAR = $${TAR-tar}
 AM_DEFAULT_VERBOSITY = 1
-AR = /Users/luolongzhi/Project/wasm/emsdk/emscripten/1.38.19/emar
+AR = ar
 AUTOCONF = ${SHELL} /Users/luolongzhi/Project/mygithub/xaudiopro/missing autoconf
 AUTOHEADER = ${SHELL} /Users/luolongzhi/Project/mygithub/xaudiopro/missing autoheader
 AUTOMAKE = ${SHELL} /Users/luolongzhi/Project/mygithub/xaudiopro/missing automake-1.16
 AWK = gawk
-CC = /Users/luolongzhi/Project/wasm/emsdk/emscripten/1.38.19/emcc
+CC = gcc
 CCDEPMODE = depmode=gcc3
-CFLAGS = 
-CPP = /Users/luolongzhi/Project/wasm/emsdk/emscripten/1.38.19/emcc -E
+CFLAGS = -g -O2
+CPP = gcc -E
 CPPFLAGS = 
 CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H
 DEPDIR = .deps
 DLLTOOL = false
-DSYMUTIL = 
+DSYMUTIL = dsymutil
 DUMPBIN = 
 ECHO_C = \c
 ECHO_N = 
@@ -210,24 +220,24 @@ INSTALL_DATA = ${INSTALL} -m 644
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
-LD = /Users/luolongzhi/Project/wasm/emsdk/emscripten/1.38.19/emcc
+LD = /usr/bin/ld
 LDFLAGS = 
 LIBOBJS = 
 LIBS = 
 LIBTOOL = $(SHELL) $(top_builddir)/libtool
-LIPO = 
+LIPO = lipo
 LN_S = ln -s
 LTLIBOBJS = 
 LT_SYS_LIBRARY_PATH = 
 MAKEINFO = ${SHELL} /Users/luolongzhi/Project/mygithub/xaudiopro/missing makeinfo
 MANIFEST_TOOL = :
 MKDIR_P = /usr/local/bin/gmkdir -p
-NM = /Users/luolongzhi/Project/wasm/emsdk/clang/e1.38.19_64bit/llvm-nm
-NMEDIT = 
+NM = /usr/bin/nm -B
+NMEDIT = nmedit
 OBJDUMP = objdump
 OBJEXT = o
-OTOOL = 
-OTOOL64 = 
+OTOOL = otool
+OTOOL64 = :
 PACKAGE = xaudiopro
 PACKAGE_BUGREPORT = luolongzhi@gmail.com
 PACKAGE_NAME = xaudiopro
@@ -236,7 +246,7 @@ PACKAGE_TARNAME = xaudiopro
 PACKAGE_URL = 
 PACKAGE_VERSION = 1.0
 PATH_SEPARATOR = :
-RANLIB = /Users/luolongzhi/Project/wasm/emsdk/emscripten/1.38.19/emranlib
+RANLIB = ranlib
 SED = /usr/local/bin/gsed
 SET_MAKE = 
 SHELL = /bin/sh
@@ -246,8 +256,8 @@ abs_builddir = /Users/luolongzhi/Project/mygithub/xaudiopro/xatools
 abs_srcdir = /Users/luolongzhi/Project/mygithub/xaudiopro/xatools
 abs_top_builddir = /Users/luolongzhi/Project/mygithub/xaudiopro
 abs_top_srcdir = /Users/luolongzhi/Project/mygithub/xaudiopro
-ac_ct_AR = 
-ac_ct_CC = 
+ac_ct_AR = ar
+ac_ct_CC = gcc
 ac_ct_DUMPBIN = 
 am__include = include
 am__leading_dot = .
@@ -266,11 +276,11 @@ datarootdir = ${prefix}/share
 docdir = ${datarootdir}/doc/${PACKAGE_TARNAME}
 dvidir = ${docdir}
 exec_prefix = ${prefix}
-host = x86-none-linux-gnu
-host_alias = x86-none-linux
-host_cpu = x86
-host_os = linux-gnu
-host_vendor = none
+host = x86_64-apple-darwin16.4.0
+host_alias = 
+host_cpu = x86_64
+host_os = darwin16.4.0
+host_vendor = apple
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
@@ -283,7 +293,7 @@ mandir = ${datarootdir}/man
 mkdir_p = $(MKDIR_P)
 oldincludedir = /usr/include
 pdfdir = ${docdir}
-prefix = /Users/luolongzhi/Project/mygithub/xaudiopro/wasm/build/dist
+prefix = /usr/local
 program_transform_name = s,x,x,
 psdir = ${docdir}
 sbindir = ${exec_prefix}/sbin
@@ -294,6 +304,7 @@ target_alias =
 top_build_prefix = ../
 top_builddir = ..
 top_srcdir = ..
+#bin_PROGRAMS=xaresample.bc xapcm2wav.bc xadenoise.bc
 test_SOURCES = test.c test_opt.c
 test_INCLUDES = test_opt.h
 test_LDADD = -lm \
@@ -407,17 +418,17 @@ clean-binPROGRAMS:
 	echo " rm -f" $$list; \
 	rm -f $$list
 
-xadenoise.bc$(EXEEXT): $(xadenoise_bc_OBJECTS) $(xadenoise_bc_DEPENDENCIES) $(EXTRA_xadenoise_bc_DEPENDENCIES) 
-	@rm -f xadenoise.bc$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(xadenoise_bc_OBJECTS) $(xadenoise_bc_LDADD) $(LIBS)
+xadenoise$(EXEEXT): $(xadenoise_OBJECTS) $(xadenoise_DEPENDENCIES) $(EXTRA_xadenoise_DEPENDENCIES) 
+	@rm -f xadenoise$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(xadenoise_OBJECTS) $(xadenoise_LDADD) $(LIBS)
 
-xapcm2wav.bc$(EXEEXT): $(xapcm2wav_bc_OBJECTS) $(xapcm2wav_bc_DEPENDENCIES) $(EXTRA_xapcm2wav_bc_DEPENDENCIES) 
-	@rm -f xapcm2wav.bc$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(xapcm2wav_bc_OBJECTS) $(xapcm2wav_bc_LDADD) $(LIBS)
+xapcm2wav$(EXEEXT): $(xapcm2wav_OBJECTS) $(xapcm2wav_DEPENDENCIES) $(EXTRA_xapcm2wav_DEPENDENCIES) 
+	@rm -f xapcm2wav$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(xapcm2wav_OBJECTS) $(xapcm2wav_LDADD) $(LIBS)
 
-xaresample.bc$(EXEEXT): $(xaresample_bc_OBJECTS) $(xaresample_bc_DEPENDENCIES) $(EXTRA_xaresample_bc_DEPENDENCIES) 
-	@rm -f xaresample.bc$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(xaresample_bc_OBJECTS) $(xaresample_bc_LDADD) $(LIBS)
+xaresample$(EXEEXT): $(xaresample_OBJECTS) $(xaresample_DEPENDENCIES) $(EXTRA_xaresample_DEPENDENCIES) 
+	@rm -f xaresample$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(xaresample_OBJECTS) $(xaresample_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -427,7 +438,9 @@ distclean-compile:
 
 include ./$(DEPDIR)/xadenoise.Po # am--include-marker
 include ./$(DEPDIR)/xapcm2wav.Po # am--include-marker
+include ./$(DEPDIR)/xapcm2wav_opt.Po # am--include-marker
 include ./$(DEPDIR)/xaresample.Po # am--include-marker
+include ./$(DEPDIR)/xaresample_opt.Po # am--include-marker
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -591,7 +604,9 @@ clean-am: clean-binPROGRAMS clean-generic clean-libtool mostlyclean-am
 distclean: distclean-am
 		-rm -f ./$(DEPDIR)/xadenoise.Po
 	-rm -f ./$(DEPDIR)/xapcm2wav.Po
+	-rm -f ./$(DEPDIR)/xapcm2wav_opt.Po
 	-rm -f ./$(DEPDIR)/xaresample.Po
+	-rm -f ./$(DEPDIR)/xaresample_opt.Po
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -639,7 +654,9 @@ installcheck-am:
 maintainer-clean: maintainer-clean-am
 		-rm -f ./$(DEPDIR)/xadenoise.Po
 	-rm -f ./$(DEPDIR)/xapcm2wav.Po
+	-rm -f ./$(DEPDIR)/xapcm2wav_opt.Po
 	-rm -f ./$(DEPDIR)/xaresample.Po
+	-rm -f ./$(DEPDIR)/xaresample_opt.Po
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
