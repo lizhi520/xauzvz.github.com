@@ -366,7 +366,7 @@ static void spectrum_reduction(llz_denoise_t *f, short *data_in, short *data_out
     llz_ifft_f(f->h_fft[i], fft_work_buf);
 
     for (j = 0 ; j < FRAME_BUF ; j++){
-        cpu_overlap_buf[j] += fft_work[j+j] * window[j];
+        cpu_overlap_buf[j] += 0.88*fft_work[j+j] * window[j];
     }
 
     for (j = 0 ; j < HOP ; j++){
