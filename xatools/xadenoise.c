@@ -39,6 +39,8 @@ static char  opt_inputfile[256]  = "";
 static char  opt_outputfile[256] = "";
 
 static int   opt_type = DENOISE_RNN;
+static float opt_gain = 1.0;
+static float opt_fc   = 0.6;
 
 const char *usage =
 "\n\n"
@@ -53,6 +55,8 @@ const char *default_set =
 "\n\n"
 "No argument input, run by default settings\n"
 "    --type [0]\n"
+"    --gain [1.0]\n"
+"    --fc   [0.6]\n"
 "\n\n";
 
 const char *short_help =
@@ -62,6 +66,8 @@ const char *short_help =
 "    -i <inputfile>       Set input filename\n"
 "    -o <outputfile>      Set output filename\n"
 "    -t <type>            Set denoise type\n"
+"    -g <type>            Set denoise gain\n"
+"    -c <type>            Set denoise lpf cutoff frequency cof\n"
 "    --help               Show this abbreviated help.\n"
 "    --long-help          Show complete help.\n"
 "    --license            for the license terms for llzlab.\n"
@@ -79,6 +85,8 @@ const char *long_help =
 "    --input <inputfile>  Set input filename\n"
 "    --output <inputfile> Set output filename\n"
 "    --type <type>        Set denoise type\n"
+"    --gain <gain>        Set denoise gain\n"
+"    --fc <fc>            Set denoise lpf cutoff frequency cof\n"
 "\n\n";
 
 const char *license =
@@ -106,6 +114,8 @@ static void llz_printopt()
     LLZ_PRINT("NOTE: inputfile = %s\n", opt_inputfile);
     LLZ_PRINT("NOTE: outputfile= %s\n", opt_outputfile);
     LLZ_PRINT("NOTE: type = %d\n", opt_type);
+    LLZ_PRINT("NOTE: gain= %f\n", opt_gain);
+    LLZ_PRINT("NOTE: cutoff= %f\n", opt_fc);
 }
 
 /**
@@ -157,7 +167,7 @@ static int denoise_parseopt(int argc, char *argv[])
     const char *die_msg = NULL;
 
     while (1) {
-        static char * const     short_options = "hHLi:o:t:";  
+        static char * const     short_options = "hHLi:o:t:g:c:";  
         static struct option    long_options[] = 
                                 {
                                     { "help"       , 0, 0, 'h'}, 
@@ -166,6 +176,8 @@ static int denoise_parseopt(int argc, char *argv[])
                                     { "input"      , 1, 0, 'i'},                 
                                     { "output"     , 1, 0, 'o'},                 
                                     { "type"       , 1, 0, 't'},        
+                                    { "gain"       , 1, 0, 'g'},        
+                                    { "fc"         , 1, 0, 'c'},        
                                     {0             , 0, 0,  0},
                                 };
         int c = -1;
@@ -226,6 +238,24 @@ static int denoise_parseopt(int argc, char *argv[])
                           break;
                       }
 
+            case 'g': {
+                          char tmp[32] = {0};
+                          if (sscanf(optarg, "%s", tmp) > 0) {
+                              opt_gain = atof(tmp);
+                              LLZ_PRINT("SUCC: set denoise gain = %f\n", opt_gain);
+                          }
+                          break;
+                      }
+
+            case 'c': {
+                          char tmp[32] = {0};
+                          if (sscanf(optarg, "%s", tmp) > 0) {
+                              opt_fc = atof(tmp);
+                              LLZ_PRINT("SUCC: set denoise cutoff = %f\n", opt_fc);
+                          }
+                          break;
+                      }
+
             case '?':
             default:
                       die_msg = usage;
@@ -254,19 +284,6 @@ fail:
     return -1;
 }
 
-
-
-#if 0
-int main()
-{
-    printf("22222222222222\n");
-
-    return 0;
-
-}
-
-
-#else
 
 int main(int argc, char *argv[])
 {
@@ -317,7 +334,7 @@ int main(int argc, char *argv[])
     samplerate_in = fmt.samplerate;
     fseek(sourcefile,44,0);
 
-    h_denoise = llz_denoise_init(opt_type, fmt.channels, fmt.samplerate, 1, 0.6);
+    h_denoise = llz_denoise_init(opt_type, fmt.channels, fmt.samplerate, opt_gain, opt_fc);
 
     fmt1.format = 0x0001;
     fmt1.channels = fmt.channels;
@@ -415,4 +432,3 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-#endif
