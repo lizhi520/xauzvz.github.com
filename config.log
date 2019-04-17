@@ -30,8 +30,8 @@ Kernel configured for up to 4 processors.
 Processor type: x86_64h (Intel x86-64h Haswell)
 Processors active: 0 1 2 3
 Primary memory available: 8.00 gigabytes
-Default processor set: 419 tasks, 2912 threads, 4 processors
-Load average: 1.96, Mach factor: 2.07
+Default processor set: 374 tasks, 2751 threads, 4 processors
+Load average: 2.84, Mach factor: 1.95
 /bin/machine           = unknown
 /usr/bin/oslevel       = unknown
 /bin/universe          = unknown
@@ -680,13 +680,11 @@ config.status:1400: cd libxautil       && sed -e '/# am--include-marker/d' Makef
 make: Nothing to be done for 'am--depfiles'.
 config.status:1405: $? = 0
 config.status:1400: cd libxafilter       && sed -e '/# am--include-marker/d' Makefile         | make -f - am--depfiles
-make: Nothing to be done for 'am--depfiles'.
 config.status:1405: $? = 0
 config.status:1400: cd libxacodec       && sed -e '/# am--include-marker/d' Makefile         | make -f - am--depfiles
 make: Nothing to be done for 'am--depfiles'.
 config.status:1405: $? = 0
 config.status:1400: cd xatools       && sed -e '/# am--include-marker/d' Makefile         | make -f - am--depfiles
-make: Nothing to be done for 'am--depfiles'.
 config.status:1405: $? = 0
 config.status:1400: cd libxaext/librnnoise       && sed -e '/# am--include-marker/d' Makefile         | make -f - am--depfiles
 make: Nothing to be done for 'am--depfiles'.

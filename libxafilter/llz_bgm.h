@@ -21,11 +21,11 @@ extern "C"
 #include <stdint.h>
 
 
-uintptr_t llz_bgm_init();
+uintptr_t llz_bgm_init(float gain);
 
 void llz_bgm_uninit(uintptr_t handle);
 
-int llz_bgm_extract(uintptr_t handle, unsigned char *buf_in, unsigned char *buf_out, int frame_len_bytes);
+void llz_bgm_extract(uintptr_t handle, short *buf_in, short *buf_out, int frame_len);
 
 
 #ifdef __cplusplus 

@@ -20,7 +20,6 @@ typedef struct _llz_bgm_t {
 } llz_bgm_t;
 
 
-
 uintptr_t llz_bgm_init(float gain)
 {
 
@@ -43,10 +42,28 @@ void llz_bgm_uninit(uintptr_t handle)
 }
 
 
-int llz_bgm_extract(uintptr_t handle, unsigned char *buf_in, unsigned char *buf_out, int frame_len_bytes)
+void llz_bgm_extract(uintptr_t handle, short *buf_in, short *buf_out, int frame_len)
 {
     llz_bgm_t *f = (llz_bgm_t *)handle;
+    short left, right;
+    float result;
+    int i;
 
+    for (i = 0; i < frame_len; i++) {
+        left  = buf_in[i+i];
+        right = buf_in[i+i+1];
 
-    return frame_len_bytes;
+        result = f->gain * (left - right);
+
+        if (result >= 32767) {
+            result = 32767;
+        }
+
+        if (result <= -32767) {
+            result = -32767;
+        }
+
+        buf_out[i+i] = buf_out[i+i+1] = (short)result;
+    }
+
 }
